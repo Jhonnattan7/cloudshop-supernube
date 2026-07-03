@@ -3,6 +3,19 @@
 Full deployment from scratch using Terraform.
 No manual AWS Console steps allowed after bootstrap.
 
+## Step 0 - Bootstrap Terraform Remote State
+
+Before applying the main infrastructure, you must create the remote state bucket and lock table:
+
+```bash
+cd terraform-bootstrap
+terraform init
+terraform apply
+cd ..
+```
+
+Type `yes` when prompted.
+
 ## Step 1 - Initialize Terraform
 
 ```bash
