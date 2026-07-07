@@ -7,6 +7,12 @@ resource "aws_api_gateway_rest_api" "api" {
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
+  # sin esto, terraform nunca vuelve a desplegar cuando se agregan rutas
+  # por fuera de este modulo (raiz define los recursos de cada servicio)
+  triggers = {
+    redeployment = var.redeploy_trigger
+  }
+
   depends_on = [
     aws_api_gateway_rest_api.api
   ]

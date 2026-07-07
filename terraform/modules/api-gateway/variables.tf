@@ -14,3 +14,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "redeploy_trigger" {
+  description = "Value that changes whenever routes/integrations change, forces API Gateway to redeploy"
+  type        = string
+  default     = ""
+}

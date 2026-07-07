@@ -47,3 +47,8 @@ output "table_audit_arn" {
   description = "The ARN of the Audit DynamoDB table"
   value       = module.dynamodb_audit.table_arn
 }
+
+output "auth_jwt_authorizer_id" {
+  description = "ID of the shared JWT authorizer; other services attach their protected methods to this"
+  value       = aws_api_gateway_authorizer.jwt.id
+}

@@ -17,3 +17,8 @@ output "stage_name" {
   description = "The name of the API Gateway stage"
   value       = aws_api_gateway_stage.stage.stage_name
 }
+
+output "root_resource_id" {
+  description = "ID of the REST API's root resource, used by services to attach their own resource trees"
+  value       = aws_api_gateway_rest_api.api.root_resource_id
+}

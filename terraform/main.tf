@@ -83,6 +83,14 @@ module "api_gateway" {
   api_name   = "${local.prefix}-api"
   stage_name = var.environment
   tags       = local.common_tags
+
+  redeploy_trigger = sha1(jsonencode([
+    aws_api_gateway_method.auth_register_post.id,
+    aws_api_gateway_integration.auth_register_post.id,
+    aws_api_gateway_method.auth_login_post.id,
+    aws_api_gateway_integration.auth_login_post.id,
+    aws_api_gateway_authorizer.jwt.id,
+  ]))
 }
 
 module "eventbridge" {

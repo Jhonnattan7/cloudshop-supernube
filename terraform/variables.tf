@@ -21,3 +21,21 @@ variable "sender_email" {
   type        = string
   default     = "admin@cloudshop.local"
 }
+
+variable "jwt_secret" {
+  description = "Secret used to sign and verify JWT tokens"
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Email for the seeded admin user"
+  type        = string
+  default     = "admin@cloudshop.local"
+}
+
+variable "admin_password" {
+  description = "Password for the seeded admin user"
+  type        = string
+  sensitive   = true
+}
