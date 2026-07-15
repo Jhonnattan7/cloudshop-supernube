@@ -90,14 +90,15 @@ module "api_gateway" {
     aws_api_gateway_method.auth_login_post.id,
     aws_api_gateway_integration.auth_login_post.id,
     aws_api_gateway_authorizer.jwt.id,
+    aws_api_gateway_method.reports_dashboard_get.id,
+    aws_api_gateway_integration.reports_dashboard_get.id,
   ]))
 }
 
 module "eventbridge" {
-  source   = "./modules/eventbridge"
-  bus_name = local.event_bus_name
-  # Se añade un ARN temporal ya que el módulo lo requiere (hasta que se cree la Lambda real)
-  events_lambda_arn = "arn:aws:lambda:${var.aws_region}:123456789012:function:${local.prefix}-events-lambda"
+  source            = "./modules/eventbridge"
+  bus_name          = local.event_bus_name
+  events_lambda_arn = module.events_lambda.function_arn
   tags              = local.common_tags
 }
 

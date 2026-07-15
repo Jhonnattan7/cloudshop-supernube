@@ -53,3 +53,20 @@ resource "aws_cloudwatch_event_target" "product_deleted_target" {
   event_bus_name = aws_cloudwatch_event_bus.this.name
   arn            = var.events_lambda_arn
 }
+
+resource "aws_cloudwatch_event_rule" "user_created" {
+  name           = "user-created-rule"
+  description    = "Capture USER_CREATED events"
+  event_bus_name = aws_cloudwatch_event_bus.this.name
+
+  event_pattern = jsonencode({
+    source        = ["cloudshop.auth"]
+    "detail-type" = ["USER_CREATED"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "user_created_target" {
+  rule           = aws_cloudwatch_event_rule.user_created.name
+  event_bus_name = aws_cloudwatch_event_bus.this.name
+  arn            = var.events_lambda_arn
+}

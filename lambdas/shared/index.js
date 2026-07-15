@@ -31,9 +31,12 @@ exports.handler = async (event) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     // el authorizer solo valida el token, el 403 por rol lo maneja cada lambda de servicio
+    // email se reenvia porque ya viene validado en el JWT: evita que otros servicios
+    // necesiten permiso de lectura sobre la tabla users
     return buildPolicy(decoded.userId, 'Allow', event.methodArn, {
       userId: decoded.userId,
-      rol: decoded.rol
+      rol: decoded.rol,
+      email: decoded.email
     });
   } catch (err) {
     throw new Error('Unauthorized');

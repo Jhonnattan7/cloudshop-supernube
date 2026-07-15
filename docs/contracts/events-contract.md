@@ -1,9 +1,5 @@
 # Events Contract
 
-Owner: P5 — Events Service
-All teams must follow this contract exactly.
-No service invents its own event schema.
-
 ## Event structure (all events)
 
 ```json
@@ -26,6 +22,7 @@ Consumed by: Events Service (`lambdas/events/`)
   "detail": {
     "orderId": "ord_abc123",
     "userId": "usr_abc123",
+    "email": "user@email.com",
     "items": [
       {
         "productId": "prod_abc123",
@@ -39,6 +36,12 @@ Consumed by: Events Service (`lambdas/events/`)
   }
 }
 ```
+
+**`email` field — where it comes from:**
+
+Events Service only has IAM permissions over the `products` and `audit` tables (see `docs/security/iam-policies.md`), not over `users`. It cannot look up the customer's email itself, so Orders Service must include it directly in the event.
+
+Orders Service must read `email` from `event.requestContext.authorizer.email` (already present in the validated JWT context — see `docs/contracts/auth-contract.md`), **not** from a `GetItem`/`Scan` against the `users` table. Querying `users` from Orders would require a new IAM permission that its documented role does not have and does not need — a violation of least privilege (PDF section 5).
 
 **Triggers:**
 
