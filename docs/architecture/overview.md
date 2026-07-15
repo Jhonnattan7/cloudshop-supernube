@@ -101,11 +101,13 @@ Full auth contract -> [docs/contracts/auth-contract.md](../contracts/auth-contra
 ### Events Service (`lambdas/events/`)
 **Owns:** EventBridge consumers — no API Gateway routes
 
+Full event contract -> [docs/contracts/events-contract.md](../contracts/events-contract.md)
+
 **Does:**
-- `ORDER_CREATED` -> decrement inventory in products table
-- `ORDER_CREATED` -> write audit record in audit table
-- `ORDER_CREATED` -> send confirmation email via SES
-- `ORDER_CANCELLED` -> write audit record in audit table
+- `ORDER_CREATED` -> decrement inventory in products table, publish `INVENTORY_UPDATED`, write audit record (`CREAR_PEDIDO` + `ACTUALIZAR_INVENTARIO`), send confirmation email via SES
+- `ORDER_CANCELLED` -> write audit record (`CANCELAR_PEDIDO`)
+- `PRODUCT_DELETED` -> write audit record (`ELIMINAR_PRODUCTO`)
+- `USER_CREATED` -> write audit record (`CREAR_USUARIO`)
 
 **Does NOT:**
 - Expose HTTP endpoints
