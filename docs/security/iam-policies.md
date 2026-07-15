@@ -93,14 +93,6 @@ Role: `cloudshop-g01-catalog-role`
       "Resource": "arn:aws:dynamodb:us-east-1:*:table/cloudshop-g01-stores"
     },
     {
-      "Sid": "DynamoDBAudit",
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:PutItem"
-      ],
-      "Resource": "arn:aws:dynamodb:us-east-1:*:table/cloudshop-g01-audit"
-    },
-    {
       "Sid": "CloudWatchLogs",
       "Effect": "Allow",
       "Action": [
