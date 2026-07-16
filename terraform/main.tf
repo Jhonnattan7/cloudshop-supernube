@@ -130,7 +130,7 @@ module "ses" {
 
 module "cloudwatch" {
   source           = "./modules/cloudwatch"
-  project_name     = var.project_name
+  project_name     = local.prefix
   api_gateway_name = "${local.prefix}-api"
   lambda_names     = ["auth", "catalog", "orders", "reports", "events"]
   tags             = local.common_tags
