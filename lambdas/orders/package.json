@@ -1,0 +1,16 @@
+{
+  "name": "cloudshop-order-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Order Service (carrito + pedidos) para CloudShop Enterprise",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/client-eventbridge": "^3.600.0",
+    "@aws-sdk/client-lambda": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0"
+  },
+  "devDependencies": {
+    "aws-sdk-client-mock": "^4.1.0"
+  }
+}
