@@ -31,3 +31,8 @@ terraform.rc
 # Lambda build artifacts and dependencies
 node_modules/
 *.zip
+
+# Postman local app workspace
+.postman/
+postman/
+

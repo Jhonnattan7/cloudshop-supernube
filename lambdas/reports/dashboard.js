@@ -45,8 +45,8 @@ async function buildDashboard() {
       const product = productById.get(item.productId);
       const storeId = product ? product.storeId : 'DESCONOCIDA';
       const storeName = storeNameById.get(storeId) || storeId;
-      const precioUnitario = item.precio ?? item.price ?? 0;
-      const subtotal = precioUnitario * (item.quantity || 0);
+      const subtotal = item.subtotal ?? ((item.precioUnitario ?? item.precio ?? item.price ?? 0) * (item.quantity || 0));
+
 
       ventasPorTienda[storeName] = (ventasPorTienda[storeName] || 0) + subtotal;
       cantidadPorProducto[item.productId] = (cantidadPorProducto[item.productId] || 0) + (item.quantity || 0);

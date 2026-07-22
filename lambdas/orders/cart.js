@@ -1,7 +1,7 @@
 const { QueryCommand, GetCommand, PutCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { docClient } = require('./db');
 const { successResponse, errorResponse } = require('./response');
-const { getProductById } = require('./catalogClient');
+const { getProductById } = require('./catalogclient');
 
 const CART_TABLE = process.env.CART_TABLE;
 

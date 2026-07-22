@@ -29,6 +29,32 @@ resource "aws_api_gateway_stage" "stage" {
   tags          = var.tags
 }
 
+resource "aws_iam_role" "cloudwatch" {
+  name = "${var.api_name}-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role       = aws_iam_role.cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+resource "aws_api_gateway_account" "account" {
+  cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
+}
+
 resource "aws_api_gateway_method_settings" "settings" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.stage.stage_name
@@ -39,4 +65,9 @@ resource "aws_api_gateway_method_settings" "settings" {
     data_trace_enabled = true
     metrics_enabled    = true
   }
+
+  depends_on = [
+    aws_api_gateway_account.account
+  ]
 }
+

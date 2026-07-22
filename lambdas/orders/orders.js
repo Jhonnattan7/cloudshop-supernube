@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { PutCommand, QueryCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { docClient } = require('./db');
 const { successResponse, errorResponse } = require('./response');
-const { getProductById } = require('./catalogClient');
+const { getProductById } = require('./catalogclient');
 const { publishOrderCreated, publishOrderCancelled } = require('./eventbridge');
 const { getCartItems, clearCartItems } = require('./cart');
 
