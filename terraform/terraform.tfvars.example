@@ -1,0 +1,17 @@
+# Plantilla de configuración de variables para Terraform
+# Copiar este archivo a 'terraform.tfvars' y configurar valores reales antes de aplicar:
+# cp terraform.tfvars.example terraform.tfvars
+
+aws_region   = "us-east-1"
+environment  = "dev"
+project_name = "cloudshop-supernube"
+
+# Correo real verificado en Amazon SES (Sandbox)
+sender_email = "tu-correo-real@gmail.com"
+
+# Secret JWT para firma de tokens (debe ser seguro)
+jwt_secret   = "CloudShopSuperSecretKey2026!MasterTokenKey"
+
+# Usuario Administrador inicial
+admin_email    = "admin@cloudshop.com"
+admin_password = "AdminSecretPassword123!"

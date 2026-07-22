@@ -70,7 +70,7 @@ module "order_iam" {
 module "order_lambda" {
   source        = "./modules/lambda"
   function_name = "${local.prefix}-orders-lambda"
-  source_dir    = "${path.module}/../lambdas/order"
+  source_dir    = "${path.module}/../lambdas/orders"
   role_arn      = module.order_iam.role_arn
   tags          = local.common_tags
 
