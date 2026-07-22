@@ -1,20 +1,21 @@
-# Diagrams
+# Architecture Diagrams
 
-Visual diagrams of the CloudShop Enterprise architecture.
-Generated with draw.io - source files (.drawio) and exports (.png) both committed here.
+Visual diagrams of the CloudShop Enterprise serverless architecture and Infrastructure as Code (IaC).
 
-## Files
+---
 
-| File | Description | Status |
-|---|---|---|
-| `architecture-overview.png` | Full system flow end to end | Pending |
-| `event-driven-flow.png` | EventBridge flow for ORDER_CREATED | Pending |
-| `dynamodb-schema.png` | DynamoDB tables and relationships | Pending |
-| `security-layers.png` | WAF -> API GW -> Authorizer flow | Pending |
+## Diagram Files
 
-## How to edit
+| Diagram | Location | Description | Status |
+|---|---|---|---|
+| **Overall AWS Architecture** | [architecture-diagram.png](../architecture/architecture-diagram.png) | End-to-end diagram with official AWS icons (WAF, CloudFront, S3, API Gateway, Lambdas, DynamoDB, EventBridge, CloudWatch, SES, Terraform). | Completed |
+| **Event-Driven Flow** | [architecture-diagram.png](../architecture/architecture-diagram.png) | Asynchronous EventBridge event flow for `ORDER_CREATED` integration with audit and notifications. | Completed |
+| **Database Schema** | [dynamodb-schema.md](../database/dynamodb-schema.md) | DynamoDB NoSQL tables and data model specification. | Completed |
+| **Security Layers** | [security-overview.md](../security/security-overview.md) | WAF -> API Gateway -> JWT Authorizer -> IAM Roles security layers. | Completed |
 
-1. Open the `.drawio` file at draw.io
-2. Make changes
-3. Export as PNG (File -> Export as -> PNG)
-4. Commit both the `.drawio` and the `.png`
+---
+
+## Architecture Diagram Preview
+
+![CloudShop AWS Architecture Diagram](../architecture/architecture-diagram.png)
+
