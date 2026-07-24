@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras — CloudShop Enterprise</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><img src="img/Vector.svg" class="brand-logo" alt="CloudShop Logo">CloudShop</a>
+    <ul class="nav-links" id="nav-links">
+      <!-- Llenado dinámico -->
+    </ul>
+    <div class="nav-user-panel" id="nav-user-panel">
+      <!-- Llenado dinámico -->
+    </div>
+  </nav>
+
+  <!-- Contenedor Carrito -->
+  <div class="container">
+    <h2 class="page-title">Tu Carrito de Compras</h2>
+    <p class="page-subtitle">Revisa los productos seleccionados antes de realizar el pedido.</p>
+
+    <div class="cart-layout" id="cart-layout-container">
+      <!-- Panel de Ítems (Llenado dinámico) -->
+      <div class="cart-items-panel" id="cart-items-list">
+        <div class="glass-panel" style="text-align:center; padding:3rem; color:var(--text-muted);">
+          Cargando carrito de compras...
+        </div>
+      </div>
+
+      <!-- Resumen de Pedido -->
+      <div class="glass-panel cart-summary-panel" id="cart-summary-box" style="display: none;">
+        <h3 style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">Resumen del Pedido</h3>
+        
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="summary-subtotal">$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Envío</span>
+          <span style="color: var(--success); font-weight:600;">Gratis</span>
+        </div>
+        <div class="summary-row summary-total">
+          <span>Total</span>
+          <span id="summary-total">$0.00</span>
+        </div>
+
+        <button onclick="handleCheckout()" class="btn-primary" style="width: 100%; margin-top: 1rem; font-size:1.05rem; padding:0.9rem; display:flex; align-items:center; justify-content:center;">
+          <i class="fi fi-rr-usd-circle" style="margin-right:0.4rem;"></i> Realizar Pedido (Checkout)
+        </button>
+        
+        <button onclick="handleClearCart()" class="btn-danger" style="width: 100%; margin-top: 0.5rem; font-size:0.9rem; padding:0.6rem; background:transparent; display:flex; align-items:center; justify-content:center;">
+          <i class="fi fi-rr-trash" style="margin-right:0.4rem;"></i> Vaciar Carrito
+        </button>
+
+        <a href="index.html" class="btn-secondary" style="width: 100%; display:flex; align-items:center; justify-content:center; font-size:0.9rem; padding:0.6rem; text-decoration:none;">
+          <i class="fi fi-rr-angle-left" style="margin-right:0.4rem;"></i> Seguir Comprando
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script>
+    let productsCache = {};
+    let storesCache = {};
+    let cartItems = [];
+
+    window.onload = async () => {
+      // Validar autenticación
+      if (!requireAuth(["CLIENTE"])) return;
+
+      updateNavbar();
+      await fetchCartData();
+    };
+
+    // Obtener detalles del carrito, productos y tiendas de forma paralela
+    async function fetchCartData() {
+      const itemsList = document.getElementById("cart-items-list");
+      const summaryBox = document.getElementById("cart-summary-box");
+
+      try {
+        // Ejecutar llamadas en paralelo
+        const [cartRes, productsRes, storesRes] = await Promise.all([
+          apiFetch("/cart"),
+          apiFetch("/products"),
+          apiFetch("/stores")
+        ]);
+
+        cartItems = cartRes.items || [];
+        
+        // Mapear productos y tiendas en diccionarios para acceso rápido
+        productsRes.products.forEach(p => {
+          productsCache[p.productId] = p;
+        });
+        storesRes.stores.forEach(s => {
+          storesCache[s.storeId] = s;
+        });
+
+        renderCart();
+      } catch (err) {
+        itemsList.innerHTML = `
+          <div class="glass-panel" style="text-align:center; padding:3rem; color:#fca5a5; border-color:rgba(239,68,68,0.2);">
+            Error al cargar el carrito: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    // Renderizar carrito e importes
+    function renderCart() {
+      const itemsList = document.getElementById("cart-items-list");
+      const summaryBox = document.getElementById("cart-summary-box");
+      const layoutContainer = document.getElementById("cart-layout-container");
+
+      if (cartItems.length === 0) {
+        // Carrito vacío
+        layoutContainer.style.gridTemplateColumns = "1fr";
+        summaryBox.style.display = "none";
+        itemsList.innerHTML = `
+          <div class="glass-panel" style="text-align:center; padding:4rem; display:flex; flex-direction:column; align-items:center; gap:1.5rem;">
+            <i class="fi fi-rr-shopping-cart-add" style="font-size: 5rem; color: var(--primary); opacity: 0.6; margin-bottom: 0.5rem;"></i>
+            <div>
+              <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">Tu carrito está vacío</h3>
+              <p style="color: var(--text-muted);">Parece que aún no has agregado productos a tu compra.</p>
+            </div>
+            <a href="index.html" class="btn-primary" style="text-decoration:none;">Explorar Catálogo de Productos</a>
+          </div>
+        `;
+        return;
+      }
+
+      // Carrito con ítems
+      layoutContainer.style.gridTemplateColumns = "2fr 1fr";
+      summaryBox.style.display = "flex";
+      itemsList.innerHTML = "";
+
+      let subtotal = 0;
+
+      cartItems.forEach(item => {
+        const prod = productsCache[item.productId];
+        
+        // Si el producto no está en el catálogo activo, mostrar info parcial o eliminada
+        const prodName = prod ? prod.nombre : "Producto no disponible";
+        const prodCode = prod ? prod.codigo : "N/A";
+        const prodPrice = prod ? prod.precio : 0;
+        const prodStoreId = prod ? prod.storeId : null;
+        const storeName = prodStoreId && storesCache[prodStoreId] ? storesCache[prodStoreId].nombre : "Desconocido";
+
+        const itemSubtotal = prodPrice * item.quantity;
+        subtotal += itemSubtotal;
+
+        const row = document.createElement("div");
+        row.className = "cart-item-row";
+
+        row.innerHTML = `
+          <div class="cart-item-info">
+            <span style="font-size:0.75rem; color:var(--primary); font-weight:700; text-transform:uppercase;">${prodCode}</span>
+            <div class="cart-item-title">${prodName}</div>
+            <div class="cart-item-price">$${prodPrice.toFixed(2)} c/u</div>
+            <div class="cart-item-store">Vendido por: ${storeName}</div>
+          </div>
+          
+          <div class="cart-qty-control">
+            <button onclick="updateQuantity('${item.productId}', ${item.quantity - 1})" class="btn-qty">—</button>
+            <span class="qty-val">${item.quantity}</span>
+            <button onclick="updateQuantity('${item.productId}', ${item.quantity + 1})" class="btn-qty">+</button>
+          </div>
+
+          <div class="cart-item-subtotal">$${itemSubtotal.toFixed(2)}</div>
+          
+          <button onclick="removeItem('${item.productId}')" class="btn-cart-remove" style="color:var(--primary); font-size: 1.25rem;" title="Eliminar ítem">
+            <i class="fi fi-rr-trash"></i>
+          </button>
+        `;
+
+        itemsList.appendChild(row);
+      });
+
+      // Actualizar resumen
+      document.getElementById("summary-subtotal").textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById("summary-total").textContent = `$${subtotal.toFixed(2)}`;
+    }
+
+    // Actualizar cantidad de un ítem (consume PUT /cart/items/{productId})
+    async function updateQuantity(productId, newQty) {
+      if (newQty < 0) return;
+      
+      try {
+        await apiFetch(`/cart/items/${productId}`, {
+          method: "PUT",
+          body: JSON.stringify({ quantity: newQty })
+        });
+        
+        if (newQty === 0) {
+          showToast("Producto eliminado del carrito", "success");
+          cartItems = cartItems.filter(item => item.productId !== productId);
+        } else {
+          const item = cartItems.find(item => item.productId === productId);
+          if (item) item.quantity = newQty;
+        }
+
+        renderCart();
+        updateCartCounter();
+      } catch (err) {
+        showToast(err.message || "Error al actualizar cantidad", "error");
+      }
+    }
+
+    // Eliminar producto del carrito (consume DELETE /cart/items/{productId})
+    async function removeItem(productId) {
+      try {
+        await apiFetch(`/cart/items/${productId}`, {
+          method: "DELETE"
+        });
+        showToast("Producto eliminado del carrito", "success");
+        cartItems = cartItems.filter(item => item.productId !== productId);
+        renderCart();
+        updateCartCounter();
+      } catch (err) {
+        showToast(err.message || "Error al eliminar producto", "error");
+      }
+    }
+
+    // Vaciar carrito por completo (consume DELETE /cart)
+    function handleClearCart() {
+      showCustomConfirm(
+        "Vaciar Carrito",
+        "¿Está seguro de que desea vaciar por completo el carrito de compras?",
+        async () => {
+          try {
+            await apiFetch("/cart", {
+              method: "DELETE"
+            });
+            showToast("Carrito vaciado", "success");
+            cartItems = [];
+            renderCart();
+            updateCartCounter();
+          } catch (err) {
+            showToast("Error al vaciar carrito: " + err.message, "error");
+          }
+        }
+      );
+    }
+
+    // Realizar checkout (consume POST /orders)
+    async function handleCheckout() {
+      try {
+        const order = await apiFetch("/orders", {
+          method: "POST"
+        });
+        
+        showToast("Pedido realizado con éxito. Redirigiendo...", "success");
+        
+        // Redirigir a la lista de pedidos después de 1.5s
+        setTimeout(() => {
+          window.location.href = "orders.html";
+        }, 1500);
+      } catch (err) {
+        showToast("Error al procesar checkout: " + err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>

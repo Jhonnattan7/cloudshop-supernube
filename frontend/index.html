@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo — CloudShop Enterprise</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><img src="img/Vector.svg" class="brand-logo" alt="CloudShop Logo">CloudShop</a>
+    <ul class="nav-links" id="nav-links">
+      <!-- Llenado dinámico -->
+    </ul>
+    <div class="nav-user-panel" id="nav-user-panel">
+      <!-- Llenado dinámico -->
+    </div>
+  </nav>
+
+  <!-- Panel de Administración (Dos botones que abren modales) -->
+  <div class="container" id="admin-actions-panel" style="display: none; margin-bottom: 2rem;">
+    <div style="border-bottom: 2px solid rgba(236, 72, 153, 0.15); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+      <h3 class="page-title" style="color: var(--primary); margin-bottom: 0.5rem;">
+        Panel de Control Administrativo
+      </h3>
+    </div>
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <button onclick="openCreateStoreModal()" class="btn-primary" style="padding:0.9rem 1.75rem; font-size:1rem; border: 1.5px solid rgba(236, 72, 153, 0.25); box-shadow: 0 4px 12px rgba(236, 72, 153, 0.05); display:flex; align-items:center; justify-content:center;">
+        <i class="fi fi-rr-shop" style="margin-right:0.4rem;"></i> Registrar Nueva Tienda
+      </button>
+      <button onclick="openCreateProductModal()" class="btn-accent" style="padding:0.9rem 1.75rem; font-size:1rem; border: 1.5px solid rgba(20, 184, 166, 0.25); box-shadow: 0 4px 12px rgba(20, 184, 166, 0.05); display:flex; align-items:center; justify-content:center;">
+        <i class="fi fi-rr-box-open" style="margin-right:0.4rem;"></i> Registrar Nuevo Producto
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal Catálogo -->
+  <div class="container">
+    
+    <!-- Título del Catálogo de Productos Existentes -->
+    <div style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--panel-border); padding-bottom: 0.75rem;">
+      <h2 class="page-title" style="margin-bottom:0.25rem;">
+        Productos en Venta
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">Visualiza y filtra los productos disponibles en todo el catálogo.</p>
+    </div>
+
+    <!-- Filtros de Tiendas, Categorías y Disponibilidad -->
+    <div class="catalog-header">
+      <div class="filter-group">
+        <div>
+          <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Filtrar por Tienda</label>
+          <select class="filter-select" id="filter-store" onchange="loadCatalog()">
+            <option value="">Todas las Tiendas</option>
+            <!-- Llenado dinámico -->
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Filtrar por Categoría</label>
+          <select class="filter-select" id="filter-category" onchange="loadCatalog()">
+            <option value="">Todas las Categorías</option>
+            <option value="Electronica">Electrónica</option>
+            <option value="Accesorios">Accesorios</option>
+            <option value="Ropa">Ropa</option>
+            <option value="Hogar">Hogar</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">Disponibilidad</label>
+          <select class="filter-select" id="filter-availability" onchange="loadCatalog()">
+            <option value="">Todos los Productos</option>
+            <option value="disponibles">Solo Disponibles</option>
+            <option value="agotados">Solo Agotados</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <span style="font-size: 0.85rem; color: var(--text-muted);" id="catalog-count">Mostrando 0 productos</span>
+      </div>
+    </div>
+
+    <!-- Grilla de Productos -->
+    <div class="product-grid" id="product-grid">
+      <!-- Cargando productos... -->
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PRODUCTO (ADMIN) -->
+  <div id="modal-edit-product" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div class="glass-panel" style="width: 500px; max-width: 90%; border: 1.5px solid rgba(236, 72, 153, 0.25);">
+      <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;"><i class="fi fi-rr-pencil"></i> Editar Producto</h3>
+      <form onsubmit="handleSaveEditProduct(event)">
+        <input type="hidden" id="edit-prod-id">
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-name">Nombre</label>
+          <input class="form-input" type="text" id="edit-prod-name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-desc">Descripción</label>
+          <input class="form-input" type="text" id="edit-prod-desc">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="edit-prod-price">Precio ($)</label>
+            <input class="form-input" type="number" step="0.01" id="edit-prod-price" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="edit-prod-stock">Stock / Inventario</label>
+            <input class="form-input" type="number" id="edit-prod-stock" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-active">Estado</label>
+          <select class="filter-select" id="edit-prod-active" style="width:100%">
+            <option value="true">Activo (Visible)</option>
+            <option value="false">Inactivo (Oculto)</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn-primary" style="flex:1;">Guardar Cambios</button>
+          <button type="button" class="btn-secondary" onclick="closeEditModal()" style="flex:1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR TIENDA (ADMIN) -->
+  <div id="modal-create-store" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div class="glass-panel" style="width: 450px; max-width: 90%; padding: 2rem; border: 1.5px solid rgba(236, 72, 153, 0.25);">
+      <h3 style="margin-bottom: 1.5rem; color: var(--primary); font-weight: 700; display:flex; align-items:center; gap:0.5rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem;">
+        <i class="fi fi-rr-shop"></i> Registrar Nueva Tienda
+      </h3>
+      <form onsubmit="handleCreateStore(event)">
+        <div class="form-group">
+          <label class="form-label" for="store-name">Nombre de la Tienda</label>
+          <input class="form-input" type="text" id="store-name" required placeholder="Ej: Tienda Sur">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="store-desc">Descripción</label>
+          <input class="form-input" type="text" id="store-desc" placeholder="Ej: Sucursal zona sur de la ciudad">
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.75rem;">
+          <button type="submit" class="btn-primary" style="flex:1;">Crear Tienda</button>
+          <button type="button" class="btn-secondary" onclick="closeCreateStoreModal()" style="flex:1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR PRODUCTO (ADMIN) -->
+  <div id="modal-create-product" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div class="glass-panel" style="width: 500px; max-width: 90%; padding: 2rem; border: 1.5px solid rgba(20, 184, 166, 0.25);">
+      <h3 style="margin-bottom: 1.5rem; color: var(--accent); font-weight: 700; display:flex; align-items:center; gap:0.5rem; border-bottom: 1px solid rgba(20, 184, 166, 0.15); padding-bottom: 0.5rem;">
+        <i class="fi fi-rr-box-open"></i> Registrar Nuevo Producto
+      </h3>
+      <form onsubmit="handleCreateProduct(event)">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="prod-code">Código de Barra</label>
+            <input class="form-input" type="text" id="prod-code" required placeholder="Ej: LAP-002">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-name">Nombre</label>
+            <input class="form-input" type="text" id="prod-name" required placeholder="Ej: Monitor Gamer">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="prod-desc">Descripción</label>
+          <input class="form-input" type="text" id="prod-desc" placeholder="Ej: Pantalla 27 pulgadas IPS">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="prod-price">Precio ($)</label>
+            <input class="form-input" type="number" step="0.01" id="prod-price" required placeholder="99.99">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-stock">Stock Inicial</label>
+            <input class="form-input" type="number" id="prod-stock" required placeholder="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-cat">Categoría</label>
+            <select class="filter-select" id="prod-cat" style="width:100%; height:46px;">
+              <option value="Electronica">Electrónica</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Hogar">Hogar</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="prod-store">Tienda Propietaria</label>
+          <select class="filter-select" id="prod-store" required style="width: 100%; height:46px;">
+            <option value="">Seleccione una tienda...</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.75rem;">
+          <button type="submit" class="btn-accent" style="flex:1;">Crear Producto</button>
+          <button type="button" class="btn-secondary" onclick="closeCreateProductModal()" style="flex:1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR INVENTARIO (OPERADOR) -->
+  <div id="modal-edit-stock" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div class="glass-panel" style="width: 400px; max-width: 90%; border: 1.5px solid rgba(236, 72, 153, 0.25);">
+      <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-weight: 700; border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;"><i class="fi fi-rr-boxes-organic"></i> Actualizar Stock de Inventario</h3>
+      <form onsubmit="handleSaveEditStock(event)">
+        <input type="hidden" id="stock-prod-id">
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600;">Producto: <span id="stock-prod-title" style="color:var(--primary);"></span></label>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="stock-prod-qty">Nuevo Stock Disponible</label>
+          <input class="form-input" type="number" id="stock-prod-qty" required min="0">
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn-primary" style="flex:1;">Actualizar Stock</button>
+          <button type="button" class="btn-secondary" onclick="closeStockModal()" style="flex:1;">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE DE PRODUCTO (CLIENTE/VISITANTE) -->
+  <div id="modal-product-detail" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div class="glass-panel" style="width: 550px; max-width: 90%; padding: 2.25rem; border: 1.5px solid rgba(200, 94, 181, 0.25); position: relative;">
+      
+      <!-- Botón de Cerrar en la esquina -->
+      <button type="button" onclick="closeProductDetailModal()" style="position: absolute; top: 1.25rem; right: 1.25rem; background: transparent; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.15rem; display: flex; align-items: center; justify-content: center; padding: 0.25rem;">
+        <i class="fi fi-rr-cross-small"></i>
+      </button>
+
+      <div id="detail-modal-content">
+        <!-- Contenido generado dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script>
+    let storesList = [];
+    let productsList = [];
+
+    window.onload = async () => {
+      updateNavbar();
+      
+      const role = localStorage.getItem("jwt_role");
+      if (role === "ADMIN") {
+        document.getElementById("admin-actions-panel").style.display = "block";
+      }
+
+      // Cerrar modales haciendo clic en el fondo oscuro (fuera del panel del modal)
+      window.addEventListener('click', (e) => {
+        const detailModal = document.getElementById("modal-product-detail");
+        if (e.target === detailModal) closeProductDetailModal();
+
+        const createStoreModal = document.getElementById("modal-create-store");
+        if (e.target === createStoreModal) closeCreateStoreModal();
+
+        const createProdModal = document.getElementById("modal-create-product");
+        if (e.target === createProdModal) closeCreateProductModal();
+
+        const editStockModal = document.getElementById("modal-edit-stock");
+        if (e.target === editStockModal) closeStockModal();
+
+        const editProdModal = document.getElementById("modal-edit-product");
+        if (e.target === editProdModal) closeEditModal();
+      });
+
+      await loadStores();
+      await loadCatalog();
+    };
+
+    // Cargar lista de tiendas en los selectores correspondientes
+    async function loadStores() {
+      try {
+        const data = await apiFetch("/stores");
+        storesList = data.stores || [];
+        
+        // Cargar en el filtro de búsqueda
+        const filterStore = document.getElementById("filter-store");
+        filterStore.innerHTML = '<option value="">Todas las Tiendas</option>';
+        
+        // Cargar en el formulario de creación de productos (solo ADMIN)
+        const prodStoreSelect = document.getElementById("prod-store");
+        if (prodStoreSelect) {
+          prodStoreSelect.innerHTML = '<option value="">Seleccione una tienda...</option>';
+        }
+
+        storesList.forEach(store => {
+          // Agregar a filtros
+          const optFilter = document.createElement("option");
+          optFilter.value = store.storeId;
+          optFilter.textContent = store.nombre;
+          filterStore.appendChild(optFilter);
+
+          // Agregar a formulario de creación
+          if (prodStoreSelect) {
+            const optForm = document.createElement("option");
+            optForm.value = store.storeId;
+            optForm.textContent = store.nombre;
+            prodStoreSelect.appendChild(optForm);
+          }
+        });
+        
+        // Refrescar selectores personalizados para heredar las nuevas opciones
+        makeCustomSelects();
+      } catch (err) {
+        showToast("Error al cargar tiendas: " + err.message, "error");
+      }
+    }
+
+    // Cambiar la cantidad seleccionada en una tarjeta del catálogo
+    function changeCatalogQty(productId, delta) {
+      const input = document.getElementById(`qty-input-${productId}`);
+      if (!input) return;
+      const prod = productsList.find(p => p.productId === productId);
+      const maxStock = prod ? prod.inventario : 99;
+      let val = parseInt(input.value) + delta;
+      if (val < 1) val = 1;
+      if (val > maxStock) val = maxStock;
+      input.value = val;
+    }
+
+    // Cargar catálogo de productos aplicando filtros
+    async function loadCatalog() {
+      const grid = document.getElementById("product-grid");
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Cargando productos...</div>';
+
+      const storeId = document.getElementById("filter-store").value;
+      const category = document.getElementById("filter-category").value;
+      const availability = document.getElementById("filter-availability").value;
+
+      let endpoint = "/products";
+      const params = [];
+      if (storeId) params.push(`storeId=${storeId}`);
+      if (category) params.push(`categoria=${category}`);
+      if (params.length > 0) {
+        endpoint += "?" + params.join("&");
+      }
+
+      try {
+        const data = await apiFetch(endpoint);
+        productsList = data.products || [];
+        
+        // Aplicar filtro de disponibilidad del lado del cliente
+        if (availability === "disponibles") {
+          productsList = productsList.filter(p => p.inventario > 0);
+        } else if (availability === "agotados") {
+          productsList = productsList.filter(p => p.inventario <= 0);
+        }
+        
+        document.getElementById("catalog-count").textContent = `Mostrando ${productsList.length} producto${productsList.length === 1 ? '' : 's'}`;
+
+        if (productsList.length === 0) {
+          grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">No se encontraron productos en el catálogo.</div>';
+          return;
+        }
+
+        grid.innerHTML = "";
+        const role = localStorage.getItem("jwt_role");
+
+        productsList.forEach((prod) => {
+          // Buscar nombre de la tienda propietaria
+          const tienda = storesList.find(s => s.storeId === prod.storeId);
+          const storeName = tienda ? tienda.nombre : "Tienda Desconocida";
+
+          // Determinar estado de stock
+          let stockClass = "stock-in";
+          let stockText = `${prod.inventario} disponibles`;
+          const isAgotado = prod.inventario <= 0;
+
+          if (isAgotado) {
+            stockClass = "stock-out";
+            stockText = "Agotado";
+          } else if (prod.inventario < 5) {
+            stockClass = "stock-low";
+            stockText = `Últimas ${prod.inventario} unidades`;
+          }
+
+          // Crear tarjeta. Si está agotado, agregamos la clase especial de CSS
+          const card = document.createElement("div");
+          card.className = "product-card" + (isAgotado ? " product-card-out-of-stock" : "");
+          
+          // Estilo de tarjeta si está inactiva (sólo Admin la ve inactiva)
+          // Estilo de tarjeta si está inactiva (sólo Admin la ve inactiva)
+          if (!prod.activo) {
+            card.style.opacity = "0.6";
+            card.style.border = "1px dashed rgba(239, 68, 68, 0.4)";
+          }
+
+          // Hacer que toda la tarjeta sea cliqueable (cursor pointer)
+          card.style.cursor = "pointer";
+          card.onclick = (e) => {
+            // No disparar el modal si el usuario hace clic en controles interactivos (botones, inputs, selectores)
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('a')) {
+              return;
+            }
+            openProductDetailModal(prod.productId);
+          };
+
+          // Renderizar botones según rol (Admin no puede comprar)
+          let buttonsHTML = "";
+          
+          if (!role || role === "CLIENTE") {
+            const disabledAttr = isAgotado ? "disabled" : "";
+            buttonsHTML += `
+              <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+                <div class="catalog-qty-selector" style="margin: 0; height: 38px; width: 100px; flex-shrink: 0;">
+                  <button type="button" class="btn-qty-catalog" onclick="changeCatalogQty('${prod.productId}', -1)" ${disabledAttr} style="width: 28px; height: 100%;"><i class="fi fi-rr-minus" style="font-size:0.6rem;"></i></button>
+                  <input type="text" class="qty-input-catalog" id="qty-input-${prod.productId}" value="1" readonly style="width: 32px; font-size: 0.85rem; height: 100%; border:none; text-align:center;">
+                  <button type="button" class="btn-qty-catalog" onclick="changeCatalogQty('${prod.productId}', 1)" ${disabledAttr} style="width: 28px; height: 100%;"><i class="fi fi-rr-plus" style="font-size:0.6rem;"></i></button>
+                </div>
+                <button onclick="addToCart('${prod.productId}')" class="btn-primary" ${disabledAttr} style="flex-grow: 1; height: 38px; padding: 0 0.5rem; font-size: 0.82rem; font-weight: 600; display:flex; align-items:center; justify-content:center; gap:0.3rem; white-space: nowrap;">
+                  <i class="fi fi-rr-shopping-cart-add" style="font-size:0.9rem;"></i> Agregar
+                </button>
+              </div>
+            `;
+          }
+          
+          if (role === "OPERADOR") {
+            buttonsHTML += `
+              <button onclick="openStockModal('${prod.productId}', '${prod.nombre}', ${prod.inventario})" class="btn-secondary" style="width: 100%; border-color:var(--primary); color:var(--primary); display:flex; align-items:center; justify-content:center; height: 38px;">
+                <i class="fi fi-rr-boxes-organic" style="margin-right:0.4rem;"></i> Actualizar Inventario
+              </button>
+            `;
+          }
+
+          card.innerHTML = `
+            ${role === "ADMIN" ? `
+            <div style="position: absolute; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.35rem; z-index: 10;">
+              <button onclick="openEditModal('${prod.productId}')" class="btn-qty-catalog" style="border: 1px solid rgba(200, 94, 181, 0.25); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; background: white;" title="Editar">
+                <i class="fi fi-rr-pencil" style="font-size: 0.75rem;"></i>
+              </button>
+              <button onclick="handleDeleteProduct('${prod.productId}')" class="btn-qty-catalog" style="border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #dc2626; cursor: pointer; background: white;" title="Eliminar">
+                <i class="fi fi-rr-trash" style="font-size: 0.75rem;"></i>
+              </button>
+            </div>
+            ` : ''}
+            <div>
+              <div class="product-code"><i class="fi fi-rr-box-open" style="margin-right:0.3rem; color:var(--primary);"></i>${prod.codigo} ${!prod.activo ? '<span style="color:#ef4444;">(INACTIVO)</span>' : ''}</div>
+              <h3 class="product-title" style="margin-top:0.4rem; padding-right: ${role === "ADMIN" ? '4.2rem' : '0'};">${prod.nombre}</h3>
+              <p class="product-desc" style="margin-top:0.35rem;">${prod.descripcion || 'Sin descripción'}</p>
+            </div>
+            
+            <div class="product-footer" style="margin-top:1.25rem;">
+              <div class="product-meta-row" style="margin-bottom:0.75rem;">
+                <span class="product-price">$${prod.precio.toFixed(2)}</span>
+                <span class="product-stock ${stockClass}">${stockText}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap: 0.5rem; font-size:0.8rem; color:var(--text-muted); margin-bottom: 0.85rem;">
+                <span class="product-store"><i class="fi fi-rr-shop" style="margin-right:0.3rem; color:var(--primary);"></i>${storeName}</span>
+                <span class="product-category"><i class="fi fi-rr-label" style="margin-right:0.3rem; color:var(--primary);"></i>${prod.categoria}</span>
+              </div>
+              <div>
+                ${buttonsHTML}
+              </div>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:#fca5a5;">Error al cargar catálogo: ${err.message}</div>`;
+      }
+    }
+
+    function openProductDetailModal(productId) {
+      const prod = productsList.find(p => p.productId === productId);
+      if (!prod) return;
+
+      const storeId = prod.storeId;
+      const storeName = storeId && storesList.find(s => s.storeId === storeId) ? storesList.find(s => s.storeId === storeId).nombre : "Tienda Central";
+
+      const isAgotado = (prod.inventario ?? 0) <= 0;
+      const stockClass = isAgotado ? 'stock-out' : ((prod.inventario ?? 0) <= 5 ? 'stock-low' : 'stock-in');
+      const stockText = isAgotado ? 'Agotado' : ((prod.inventario ?? 0) <= 5 ? `Bajo Stock (${prod.inventario})` : `En Stock (${prod.inventario})`);
+
+      const disabledAttr = isAgotado ? "disabled" : "";
+
+      const content = document.getElementById("detail-modal-content");
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <span style="font-size:0.75rem; color:var(--primary); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Código: ${prod.codigo}</span>
+            <h3 style="font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem; margin-bottom: 0.5rem;">${prod.nombre}</h3>
+            <div style="display:flex; gap: 0.75rem; align-items:center;">
+              <span class="product-stock ${stockClass}" style="font-size:0.75rem; padding: 0.25rem 0.6rem;">${stockText}</span>
+              <span style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:0.25rem;"><i class="fi fi-rr-shop" style="color:var(--primary);"></i> ${storeName}</span>
+              <span style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:0.25rem;"><i class="fi fi-rr-label" style="color:var(--primary);"></i> ${prod.categoria}</span>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid rgba(200, 94, 181, 0.15); border-bottom: 1px solid rgba(200, 94, 181, 0.15); padding: 1.25rem 0;">
+            <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:0.4rem;">Descripción del Producto</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap;">${prod.descripcion || 'Este producto no cuenta con descripción detallada en este momento.'}</p>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:0.8rem; color:var(--text-muted);">Precio Unitario</span>
+              <span style="font-size:1.8rem; font-weight:700; color:var(--primary);">$${prod.precio.toFixed(2)}</span>
+            </div>
+            
+            ${role !== "ADMIN" ? `
+            <div style="display: flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <label style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Cantidad:</label>
+                <div class="catalog-qty-selector" style="margin:0;">
+                  <button type="button" class="btn-qty-catalog" onclick="changeCatalogQty('${prod.productId}', -1)" ${disabledAttr}><i class="fi fi-rr-minus" style="font-size:0.7rem;"></i></button>
+                  <input type="text" class="qty-input-catalog" id="qty-input-${prod.productId}" value="1" readonly style="width: 32px; font-size: 0.85rem; text-align:center;">
+                  <button type="button" class="btn-qty-catalog" onclick="changeCatalogQty('${prod.productId}', 1)" ${disabledAttr}><i class="fi fi-rr-plus" style="font-size:0.7rem;"></i></button>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+          </div>
+
+          <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+            ${role !== "ADMIN" ? `
+            <button onclick="addToCart('${prod.productId}'); closeProductDetailModal();" class="btn-primary" ${disabledAttr} style="flex:2; height:46px; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+              <i class="fi fi-rr-shopping-cart-add"></i> ${isAgotado ? 'Agotado' : 'Agregar al Carrito'}
+            </button>
+            ` : ''}
+            <button type="button" onclick="closeProductDetailModal()" class="btn-secondary" style="flex:1; height:46px;">Volver</button>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById("modal-product-detail").style.display = "flex";
+    }
+
+    function closeProductDetailModal() {
+      document.getElementById("modal-product-detail").style.display = "none";
+    }
+
+    // Agregar producto al carrito (ahora lee la cantidad seleccionada en la tarjeta)
+    async function addToCart(productId) {
+      const token = localStorage.getItem("jwt_token");
+      if (!token) {
+        showToast("Debes iniciar sesión para agregar al carrito.", "warning");
+        setTimeout(() => {
+          window.location.href = "login.html?redirect=index.html";
+        }, 1500);
+        return;
+      }
+
+      const qtyInput = document.getElementById(`qty-input-${productId}`);
+      const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
+
+      try {
+        await apiFetch("/cart/items", {
+          method: "POST",
+          body: JSON.stringify({ productId, quantity })
+        });
+        showToast(`Producto agregado al carrito (${quantity} unidades)`, "success");
+        
+        // Resetear selector de cantidad de la tarjeta a 1
+        if (qtyInput) qtyInput.value = "1";
+        
+        updateCartCounter();
+      } catch (err) {
+        showToast(err.message || "Error al agregar al carrito", "error");
+      }
+    }
+
+    // ============================================================================
+    // FUNCIONES DEL ADMINISTRADOR (CREAR TIENDAS Y PRODUCTOS)
+    // ============================================================================
+
+    function openCreateStoreModal() {
+      document.getElementById("modal-create-store").style.display = "flex";
+    }
+    function closeCreateStoreModal() {
+      document.getElementById("modal-create-store").style.display = "none";
+    }
+    function openCreateProductModal() {
+      document.getElementById("modal-create-product").style.display = "flex";
+    }
+    function closeCreateProductModal() {
+      document.getElementById("modal-create-product").style.display = "none";
+    }
+
+    async function handleCreateStore(e) {
+      e.preventDefault();
+      const nombre = document.getElementById("store-name").value.trim();
+      const descripcion = document.getElementById("store-desc").value.trim();
+
+      try {
+        await apiFetch("/stores", {
+          method: "POST",
+          body: JSON.stringify({ nombre, descripcion })
+        });
+        showToast("Tienda creada con éxito", "success");
+        document.getElementById("store-name").value = "";
+        document.getElementById("store-desc").value = "";
+        closeCreateStoreModal();
+        await loadStores(); // Recargar selector
+      } catch (err) {
+        showToast("Error al crear tienda: " + err.message, "error");
+      }
+    }
+
+    async function handleCreateProduct(e) {
+      e.preventDefault();
+      const codigo = document.getElementById("prod-code").value.trim();
+      const nombre = document.getElementById("prod-name").value.trim();
+      const descripcion = document.getElementById("prod-desc").value.trim();
+      const precio = parseFloat(document.getElementById("prod-price").value);
+      const inventario = parseInt(document.getElementById("prod-stock").value);
+      const categoria = document.getElementById("prod-cat").value;
+      const storeId = document.getElementById("prod-store").value;
+
+      if (!storeId) {
+        showToast("Debe seleccionar una tienda activa", "warning");
+        return;
+      }
+
+      try {
+        await apiFetch("/products", {
+          method: "POST",
+          body: JSON.stringify({ codigo, nombre, descripcion, precio, inventario, categoria, storeId })
+        });
+        showToast("Producto creado con éxito", "success");
+        
+        // Resetear formulario
+        document.getElementById("prod-code").value = "";
+        document.getElementById("prod-name").value = "";
+        document.getElementById("prod-desc").value = "";
+        document.getElementById("prod-price").value = "";
+        document.getElementById("prod-stock").value = "";
+        closeCreateProductModal();
+        await loadCatalog(); // Recargar catálogo
+      } catch (err) {
+        showToast("Error al crear producto: " + err.message, "error");
+      }
+    }
+
+    function handleDeleteProduct(productId) {
+      showCustomConfirm(
+        "Eliminar Producto",
+        "¿Está seguro de que desea eliminar permanentemente este producto del catálogo?",
+        async () => {
+          try {
+            await apiFetch(`/products/${productId}`, { method: "DELETE" });
+            showToast("Producto eliminado del catálogo", "success");
+            await loadCatalog();
+          } catch (err) {
+            showToast("Error al eliminar producto: " + err.message, "error");
+          }
+        }
+      );
+    }
+
+    // Modal de edición (Admin)
+    function openEditModal(productId) {
+      const prod = productsList.find(p => p.productId === productId);
+      if (!prod) return;
+
+      document.getElementById("edit-prod-id").value = prod.productId;
+      document.getElementById("edit-prod-name").value = prod.nombre;
+      document.getElementById("edit-prod-desc").value = prod.descripcion || "";
+      document.getElementById("edit-prod-price").value = prod.precio;
+      document.getElementById("edit-prod-stock").value = prod.inventario;
+      document.getElementById("edit-prod-active").value = prod.activo ? "true" : "false";
+
+      document.getElementById("modal-edit-product").style.display = "flex";
+    }
+
+    function closeEditModal() {
+      document.getElementById("modal-edit-product").style.display = "none";
+    }
+
+    async function handleSaveEditProduct(e) {
+      e.preventDefault();
+      const productId = document.getElementById("edit-prod-id").value;
+      const nombre = document.getElementById("edit-prod-name").value.trim();
+      const descripcion = document.getElementById("edit-prod-desc").value.trim();
+      const precio = parseFloat(document.getElementById("edit-prod-price").value);
+      const inventario = parseInt(document.getElementById("edit-prod-stock").value);
+      const activo = document.getElementById("edit-prod-active").value === "true";
+
+      try {
+        await apiFetch(`/products/${productId}`, {
+          method: "PUT",
+          body: JSON.stringify({ nombre, descripcion, precio, inventario, activo })
+        });
+        showToast("Producto actualizado con éxito", "success");
+        closeEditModal();
+        await loadCatalog();
+      } catch (err) {
+        showToast("Error al editar producto: " + err.message, "error");
+      }
+    }
+
+    // ============================================================================
+    // FUNCIONES DEL OPERADOR (ACTUALIZAR STOCK)
+    // ============================================================================
+
+    window.openStockModal = function(productId, nombre, inventario) {
+      document.getElementById("stock-prod-id").value = productId;
+      document.getElementById("stock-prod-title").textContent = nombre;
+      document.getElementById("stock-prod-qty").value = inventario;
+
+      document.getElementById("modal-edit-stock").style.display = "flex";
+    };
+
+    window.closeStockModal = function() {
+      document.getElementById("modal-edit-stock").style.display = "none";
+    };
+
+    async function handleSaveEditStock(e) {
+      e.preventDefault();
+      const productId = document.getElementById("stock-prod-id").value;
+      const inventario = parseInt(document.getElementById("stock-prod-qty").value);
+
+      try {
+        // La lambda requiere el body con SOLO inventario para OPERADOR
+        await apiFetch(`/products/${productId}`, {
+          method: "PUT",
+          body: JSON.stringify({ inventario })
+        });
+        showToast("Stock actualizado con éxito", "success");
+        closeStockModal();
+        await loadCatalog();
+      } catch (err) {
+        showToast("Error al actualizar stock: " + err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>

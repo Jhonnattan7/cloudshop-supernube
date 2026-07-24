@@ -18,6 +18,16 @@ output "frontend_bucket" {
   value       = module.s3.bucket_name
 }
 
+output "frontend_bucket_name" {
+  description = "The name of the S3 bucket for the frontend (alias)"
+  value       = module.s3.bucket_name
+}
+
+output "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution"
+  value       = module.cloudfront.distribution_id
+}
+
 output "table_users_arn" {
   description = "The ARN of the Users DynamoDB table"
   value       = module.dynamodb_users.table_arn

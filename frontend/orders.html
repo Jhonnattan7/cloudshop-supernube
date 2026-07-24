@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos — CloudShop Enterprise</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><img src="img/Vector.svg" class="brand-logo" alt="CloudShop Logo">CloudShop</a>
+    <ul class="nav-links" id="nav-links">
+      <!-- Llenado dinámico -->
+    </ul>
+    <div class="nav-user-panel" id="nav-user-panel">
+      <!-- Llenado dinámico -->
+    </div>
+  </nav>
+
+  <!-- Contenedor Principal Pedidos -->
+  <div class="container">
+    <h2 class="page-title">Gestión de Pedidos</h2>
+    <p class="page-subtitle" id="page-subtitle-role">Historial de órdenes y seguimiento de estados.</p>
+
+    <!-- Layout en Dos Columnas (Split Layout) -->
+    <div class="orders-split-layout">
+      
+      <!-- Columna Izquierda: Lista Compacta de Pedidos -->
+      <div>
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted); font-weight: 600;">Listado de Pedidos</h3>
+        <div class="orders-sidebar" id="orders-sidebar-list">
+          <div class="glass-panel" style="text-align:center; padding:2rem; color:var(--text-muted);">
+            Cargando lista...
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Panel de Detalle y Gestión -->
+      <div>
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted); font-weight: 600;">Detalle y Operaciones</h3>
+        <div class="glass-panel order-details-pane" id="order-details-container">
+          <div class="order-details-empty">
+            <p style="font-size: 1rem; font-weight: 500;">Selecciona un pedido de la lista de la izquierda para ver su detalle y gestionar su estado.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script>
+    let ordersList = [];
+    let selectedOrderId = null;
+
+    window.onload = async () => {
+      // Validar autenticación
+      if (!requireAuth(["CLIENTE", "OPERADOR", "ADMIN"])) return;
+
+      updateNavbar();
+      
+      const role = localStorage.getItem("jwt_role");
+      const subtitle = document.getElementById("page-subtitle-role");
+      if (role === "CLIENTE") {
+        subtitle.textContent = "Consulta tus pedidos realizados y su estado de entrega.";
+      } else {
+        subtitle.textContent = `Panel operativo para administración global de pedidos. Rol: ${role}`;
+      }
+
+      await loadOrders();
+    };
+
+    // Cargar historial de pedidos y renderizar lista lateral
+    async function loadOrders() {
+      const sidebar = document.getElementById("orders-sidebar-list");
+      const detailsContainer = document.getElementById("order-details-container");
+
+      sidebar.innerHTML = '<div class="glass-panel" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando...</div>';
+
+      try {
+        const data = await apiFetch("/orders");
+        ordersList = data.orders || [];
+
+        // Ordenar pedidos: Activos primero (PENDIENTE, CONFIRMADO, EN_PREPARACION, ENVIADO), Terminales de último (ENTREGADO, CANCELADO).
+        // Dentro de cada grupo, ordenar por fecha descendente.
+        ordersList.sort((a, b) => {
+          const aTerminal = a.estado === "CANCELADO" || a.estado === "ENTREGADO" ? 1 : 0;
+          const bTerminal = b.estado === "CANCELADO" || b.estado === "ENTREGADO" ? 1 : 0;
+          
+          if (aTerminal !== bTerminal) {
+            return aTerminal - bTerminal;
+          }
+          
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        if (ordersList.length === 0) {
+          sidebar.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:var(--text-muted);">
+              No hay pedidos registrados.
+            </div>
+          `;
+          detailsContainer.innerHTML = `
+            <div class="order-details-empty">
+              <p style="font-size: 1rem;">No hay pedidos en la plataforma.</p>
+              <a href="index.html" class="btn-primary" style="margin-top:1.5rem; text-decoration:none;">Ir al Catálogo</a>
+            </div>
+          `;
+          return;
+        }
+
+        // Renderizar lista lateral compacta
+        sidebar.innerHTML = "";
+        let renderedTerminalDivider = false;
+        
+        const role = localStorage.getItem("jwt_role");
+        const actionLabelHTML = (role === "ADMIN" || role === "OPERADOR")
+          ? `<span style="font-size: 0.8rem; font-weight:600; color: var(--primary);">Gestionar →</span>`
+          : "";
+
+        ordersList.forEach(order => {
+          const isTerminal = order.estado === "CANCELADO" || order.estado === "ENTREGADO";
+          
+          if (isTerminal && !renderedTerminalDivider) {
+            const divider = document.createElement("div");
+            divider.className = "orders-list-divider";
+            divider.innerHTML = `
+              <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin: 1.25rem 0 0.75rem 0; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
+                <span>Historial y Finalizados</span>
+                <div style="flex-grow:1; height:1px; background:rgba(236, 72, 153, 0.15);"></div>
+              </div>
+            `;
+            sidebar.appendChild(divider);
+            renderedTerminalDivider = true;
+          }
+
+          const itemCard = document.createElement("div");
+          itemCard.className = "order-compact-card" + (isTerminal ? " order-compact-card-cancelled" : "");
+          itemCard.id = `sidebar-card-${order.orderId}`;
+          itemCard.onclick = () => selectOrder(order.orderId);
+
+          const dateStr = new Date(order.createdAt).toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+          itemCard.innerHTML = `
+            <div class="order-compact-header">
+              <span class="order-compact-id">ID: ${order.orderId}</span>
+              <span class="badge-estado badge-${order.estado.toLowerCase()}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">${order.estado}</span>
+            </div>
+            <div class="order-compact-meta">
+              Fecha: ${dateStr}<br>
+              Email: ${order.email}
+            </div>
+            <div class="order-compact-footer">
+              <span class="order-compact-total">$${order.total.toFixed(2)}</span>
+              ${actionLabelHTML}
+            </div>
+          `;
+
+          sidebar.appendChild(itemCard);
+        });
+
+        // Seleccionar automáticamente el primer pedido de la lista al cargar
+        if (ordersList.length > 0) {
+          selectOrder(ordersList[0].orderId);
+        }
+
+      } catch (err) {
+        sidebar.innerHTML = `
+          <div style="color:var(--error); font-weight:600; padding:1rem;">
+            Error al cargar pedidos: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    // Seleccionar un pedido y renderizar su detalle a la derecha
+    function selectOrder(orderId) {
+      selectedOrderId = orderId;
+      const order = ordersList.find(o => o.orderId === orderId);
+      if (!order) return;
+
+      // Actualizar clases activas en la barra lateral
+      document.querySelectorAll(".order-compact-card").forEach(card => {
+        card.classList.remove("active-order");
+      });
+      const activeCard = document.getElementById(`sidebar-card-${orderId}`);
+      if (activeCard) activeCard.classList.add("active-order");
+
+      // Renderizar el detalle
+      const detailsContainer = document.getElementById("order-details-container");
+      
+      const dateStr = new Date(order.createdAt).toLocaleString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      const role = localStorage.getItem("jwt_role");
+
+      // Controles
+      let controlsHTML = "";
+      const cancelableStates = ["PENDIENTE", "CONFIRMADO", "EN_PREPARACION"];
+      
+      if (role === "CLIENTE") {
+        if (cancelableStates.includes(order.estado)) {
+          controlsHTML = `
+            <button onclick="cancelOrder('${order.orderId}')" class="btn-danger" style="width:100%; height: 43px; font-weight: 600; display:flex; align-items:center; justify-content:center;">
+              <i class="fi fi-rr-cross-circle" style="margin-right:0.4rem;"></i> Cancelar Pedido
+            </button>
+          `;
+        }
+      } else if (role === "ADMIN" || role === "OPERADOR") {
+        const nextStates = getNextStates(order.estado);
+        let optionsHTML = `<option value="">Cambiar Estado...</option>`;
+        
+        nextStates.forEach(st => {
+          optionsHTML += `<option value="${st}">${st}</option>`;
+        });
+
+        if (order.estado !== "ENTREGADO" && order.estado !== "CANCELADO") {
+          optionsHTML += `<option value="CANCELADO">CANCELADO</option>`;
+        }
+
+        const isTerminal = order.estado === "ENTREGADO" || order.estado === "CANCELADO";
+        const disabledAttr = isTerminal ? "disabled" : "";
+
+        controlsHTML = `
+          <div class="status-update-form" style="border-top: 1px solid #cbd5e1; padding-top: 1.25rem; ${isTerminal ? 'opacity: 0.55; pointer-events: none;' : ''}">
+            <div style="width: 240px;">
+              <select class="filter-select" id="update-status-${order.orderId}" style="width:100%;" ${disabledAttr}>
+                ${optionsHTML}
+              </select>
+            </div>
+            <button onclick="updateOrderStatus('${order.orderId}')" class="btn-primary" ${disabledAttr} style="height: 43px; padding: 0 1.5rem; white-space: nowrap; display:flex; align-items:center; justify-content:center;">
+              <i class="fi fi-rr-disk" style="margin-right:0.4rem;"></i> Guardar Estado
+            </button>
+          </div>
+        `;
+      }
+
+      // Detalle de ítems (eliminado strong y ajustado para que reciba estilos de tabla)
+      let itemsRowsHTML = "";
+      order.items.forEach(item => {
+        const nombre = item.nombre || "Producto";
+        const precio = item.precioUnitario ?? item.precio ?? 0;
+        const sub = item.subtotal ?? (precio * (item.quantity || 1));
+        
+        itemsRowsHTML += `
+          <tr>
+            <td>${nombre}</td>
+            <td>$${precio.toFixed(2)}</td>
+            <td>${item.quantity || 1}</td>
+            <td style="text-align:right; font-weight:600; color:var(--primary);">$${sub.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      detailsContainer.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:1.5rem; height:100%;">
+          
+          <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; border-bottom:1px solid #cbd5e1; padding-bottom:1rem;">
+            <div>
+              <h4 style="font-size:1.15rem; color:var(--primary); font-weight:700;">Pedido ${order.orderId}</h4>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Realizado: ${dateStr}</div>
+              <div style="font-size:0.8rem; color:var(--text-main); font-weight:500; margin-top:0.2rem;">Comprador: ${order.email}</div>
+            </div>
+            <span class="badge-estado badge-${order.estado.toLowerCase()}" style="margin-top:0.25rem;">${order.estado}</span>
+          </div>
+
+          <div style="flex-grow:1; max-height: 40vh; overflow-y:auto; padding-right:0.25rem;">
+            <table class="order-items-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio Unitario</th>
+                  <th>Cantidad</th>
+                  <th style="text-align:right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRowsHTML}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="border-top:1px solid #cbd5e1; padding-top:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:1.25rem; font-weight:700; margin-bottom:1rem;">
+              <span>Total del Pedido:</span>
+              <span style="color:var(--primary);">$${order.total.toFixed(2)}</span>
+            </div>
+            ${controlsHTML ? `
+              <div class="order-controls" style="border:none; padding:0; margin:0;">
+                ${controlsHTML}
+              </div>
+            ` : ""}
+          </div>
+
+        </div>
+      `;
+
+      // Convertir el dropdown de cambio de estado a componente estilizado
+      setTimeout(makeCustomSelects, 50);
+    }
+
+    // Obtener los siguientes estados válidos
+    function getNextStates(currentStatus) {
+      const flow = {
+        "PENDIENTE": ["CONFIRMADO"],
+        "CONFIRMADO": ["EN_PREPARACION"],
+        "EN_PREPARACION": ["ENVIADO"],
+        "ENVIADO": ["ENTREGADO"],
+        "ENTREGADO": [],
+        "CANCELADO": []
+      };
+      return flow[currentStatus] || [];
+    }
+
+    // Cancelar pedido
+    function cancelOrder(orderId) {
+      showCustomConfirm(
+        "Cancelar Pedido",
+        "¿Está seguro de que desea cancelar este pedido? Esta acción no se puede deshacer y devolverá los productos al stock.",
+        async () => {
+          try {
+            await apiFetch(`/orders/${orderId}/cancel`, {
+              method: "POST",
+              body: JSON.stringify({ reason: "Cancelado por el cliente desde la interfaz" })
+            });
+            showToast("Pedido cancelado con éxito", "success");
+            await loadOrders();
+          } catch (err) {
+            showToast("Error al cancelar pedido: " + err.message, "error");
+          }
+        }
+      );
+    }
+
+    // Actualizar estado (Operadores/Admins)
+    async function updateOrderStatus(orderId) {
+      const order = ordersList.find(o => o.orderId === orderId);
+      if (order && (order.estado === "CANCELADO" || order.estado === "ENTREGADO")) {
+        showToast("Error: No se puede cambiar el estado de un pedido finalizado o cancelado.", "error");
+        return;
+      }
+
+      const select = document.getElementById(`update-status-${orderId}`);
+      const newStatus = select ? select.value : "";
+
+      if (!newStatus) {
+        showToast("Debe seleccionar un nuevo estado", "warning");
+        return;
+      }
+
+      try {
+        if (newStatus === "CANCELADO") {
+          await apiFetch(`/orders/${orderId}/cancel`, {
+            method: "POST",
+            body: JSON.stringify({ reason: "Cancelado por el operador/administrador" })
+          });
+        } else {
+          await apiFetch(`/orders/${orderId}/status`, {
+            method: "PUT",
+            body: JSON.stringify({ estado: newStatus })
+          });
+        }
+
+        showToast(`Pedido actualizado a ${newStatus}`, "success");
+        await loadOrders();
+      } catch (err) {
+        showToast("Error al actualizar pedido: " + err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>
