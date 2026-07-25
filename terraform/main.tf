@@ -132,6 +132,23 @@ module "api_gateway" {
     aws_api_gateway_integration.orders_id_status_put.id,
     aws_api_gateway_method.orders_id_cancel_post.id,
     aws_api_gateway_integration.orders_id_cancel_post.id,
+    # --- CORS OPTIONS methods (cors.tf) ---
+    aws_api_gateway_method.auth_register_options.id,
+    aws_api_gateway_method.auth_login_options.id,
+    aws_api_gateway_method.stores_options.id,
+    aws_api_gateway_method.stores_id_options.id,
+    aws_api_gateway_method.products_options.id,
+    aws_api_gateway_method.products_id_options.id,
+    aws_api_gateway_method.cart_options.id,
+    aws_api_gateway_method.cart_items_options.id,
+    aws_api_gateway_method.cart_items_id_options.id,
+    aws_api_gateway_method.orders_options.id,
+    aws_api_gateway_method.orders_id_options.id,
+    aws_api_gateway_method.orders_id_status_options.id,
+    aws_api_gateway_method.orders_id_cancel_options.id,
+    aws_api_gateway_method.reports_dashboard_options.id,
+    aws_api_gateway_gateway_response.cors_4xx.id,
+    aws_api_gateway_gateway_response.cors_5xx.id,
   ]))
 }
 

@@ -250,6 +250,9 @@
     let productsList = [];
 
     window.onload = async () => {
+      // Redirigir al login si no hay sesión activa
+      if (!requireAuth()) return;
+
       updateNavbar();
       
       const role = localStorage.getItem("jwt_role");
