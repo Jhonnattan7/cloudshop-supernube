@@ -38,13 +38,23 @@
 
 ## Guia para la Evaluacion de la Docente
 
-Para facilitar la revision y evaluacion del proyecto por parte de la catedratica:
+Para facilitar la revision y evaluacion del proyecto por parte de la catedratica (Ing. Luz Rivas):
 
-1. **Coleccion de Postman Lista para Probar**:
+1. **Credenciales de Acceso Predeterminadas para la Aplicacion Web (CloudFront)**:
+   - **Usuario Administrador**:
+     - **Email**: `admin@cloudshop.com`
+     - **Password**: `AdminSecretPassword123!`
+     - **Rol**: `ADMIN` (Acceso completo a gestion de tiendas, productos y Dashboard Ejecutivo).
+   - **Registro de Nuevos Usuarios**:
+     - En el enlace del frontend, la catedratica puede ir a la pestaña **"Registrarse"** para crear al instante cuentas con rol `CLIENTE`, `OPERADOR` o `ADMIN`.
+
+2. **Coleccion de Postman Lista para Probar**:
    En la raiz del repositorio se incluye el archivo [cloudshop_postman_collection.json](cloudshop_postman_collection.json), el cual contiene la coleccion estandarizada v2.1.0 con los 6 modulos de API y scripts de automatizacion de tokens JWT e IDs.
-2. **Evidencias de Casos de Prueba Obligatorios**:
+
+3. **Evidencias de Casos de Prueba Obligatorios**:
    Todas las capturas de ejecucion que respaldan los 4 Casos de Prueba de la rubrica (403 Forbidden, Creacion de pedido, Auditoria DynamoDB, SES y CloudWatch) se encuentran organizadas en [docs/evidence/README.md](docs/evidence/README.md).
-3. **Documentacion Tecnica de Entregables**:
+
+4. **Documentacion Tecnica de Entregables**:
    - Arquitectura y Diagrama AWS: [docs/architecture/overview.md](docs/architecture/overview.md) y [docs/diagrams/README.md](docs/diagrams/README.md).
    - Diseno de APIs y Contratos: [docs/api/](docs/api/) y [docs/contracts/](docs/contracts/).
    - Esquema NoSQL DynamoDB: [docs/database/dynamodb-schema.md](docs/database/dynamodb-schema.md).

@@ -49,6 +49,7 @@ async function loginHandler(event) {
     token,
     userId: user.userId,
     rol: user.rol,
+    nombre: user.nombre,
     expiresIn: 3600
   });
 }

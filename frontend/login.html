@@ -53,6 +53,12 @@
         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
           Ingresar al Portal
         </button>
+
+        <div style="margin-top: 1.25rem; padding: 0.85rem; background: rgba(236, 72, 153, 0.06); border: 1px dashed var(--primary); border-radius: 8px; font-size: 0.8rem; color: var(--text-main);">
+          <strong>Credenciales de Prueba (Demo Cátedra):</strong><br>
+          <span>Email: <code>admin@cloudshop.com</code></span><br>
+          <span>Password: <code>AdminSecretPassword123!</code></span>
+        </div>
       </form>
 
       <!-- FORMULARIO DE REGISTRO -->
@@ -196,8 +202,7 @@
           const u = users.find(user => user.userId === response.userId);
           if (u) userName = u.nombre;
         } else {
-          // Fallback en real usando el email
-          userName = email.split("@")[0];
+          userName = response.nombre || email.split("@")[0];
         }
         localStorage.setItem("jwt_name", userName);
 
