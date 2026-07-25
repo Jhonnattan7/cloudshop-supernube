@@ -253,8 +253,12 @@
     // Realizar checkout (consume POST /orders)
     async function handleCheckout() {
       try {
+        const idempotencyKey = `idemp_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
         const order = await apiFetch("/orders", {
-          method: "POST"
+          method: "POST",
+          headers: {
+            "Idempotency-Key": idempotencyKey
+          }
         });
         
         showToast("Pedido realizado con éxito. Redirigiendo...", "success");
@@ -264,7 +268,7 @@
           window.location.href = "orders.html";
         }, 1500);
       } catch (err) {
-        showToast("Error al procesar checkout: " + err.message, "error");
+        showToast("Error al procesar checkout: " + (err.message || err.error), "error");
       }
     }
   </script>
