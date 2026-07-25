@@ -13,9 +13,9 @@
 La plataforma ha sido desplegada en vivo utilizando una arquitectura 100% Serverless gestionada por **Terraform**. 
 
 * **URL Pública de la Aplicación (CDN CloudFront)**:
-  `https://<cloudfront-domain>.cloudfront.net` *(Se genera automáticamente tras el despliegue de Terraform)*
+  `https://d33szkdngruzwy.cloudfront.net`
 * **URL Base de la API REST (Amazon API Gateway)**:
-  `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev`
+  `https://zyaiyt390a.execute-api.us-east-1.amazonaws.com/dev`
 
 ---
 
