@@ -2,10 +2,10 @@
 // Archivo central de configuración de la API de CloudShop
 
 // URL Base de tu API Gateway en AWS (Dev)
-const API_BASE_URL = "https://dk0uwanr76.execute-api.us-east-1.amazonaws.com/dev";
+const API_BASE_URL = "https://zyaiyt390a.execute-api.us-east-1.amazonaws.com/dev";
 
 // Habilitar o deshabilitar la simulación local (Mock Mode) para pruebas sin AWS
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // Helper genérico para peticiones fetch con JWT
 async function apiFetch(endpoint, options = {}) {
