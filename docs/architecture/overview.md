@@ -163,9 +163,9 @@ Security overview -> [docs/security/security-overview.md](../security/security-o
 
 | Role | Can do |
 |---|---|
-| `ADMIN` | Manage users, stores, products, view reports |
-| `OPERADOR` | Manage inventory, manage orders |
-| `CLIENTE` | Browse products, manage own cart, view own orders |
+| `ADMIN` | Manage users, stores, products, order status, view reports |
+| `OPERADOR` | Manage inventory, update order status |
+| `CLIENTE` | Browse products, manage own cart, create orders, view own orders |
 
 Every endpoint validates:
 

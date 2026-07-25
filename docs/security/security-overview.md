@@ -67,9 +67,9 @@ Three roles control access at the endpoint level:
 
 | Role | Description |
 |---|---|
-| `ADMIN` | Full platform access |
-| `OPERADOR` | Inventory and order management |
-| `CLIENTE` | Own cart and own orders only |
+| `ADMIN` | Users, stores, products, order status management and executive reports |
+| `OPERADOR` | Inventory and order status management |
+| `CLIENTE` | Own cart, checkout, and own orders |
 
 Full permission matrix -> [docs/security/roles-matrix.md](roles-matrix.md)
 

@@ -1,13 +1,14 @@
 # Contrato de API — Servicio de Pedidos y Carrito (Orders & Cart)
 
-El servicio de pedidos expone endpoints protegidos con autenticación JWT para gestionar el carrito de compras del usuario y la creación/actualización de pedidos.
+El servicio de pedidos expone endpoints protegidos con autenticación JWT para gestionar el carrito de compras del usuario y la creación/actualización de pedidos. Los endpoints del carrito (`/cart`) y la creación de pedidos (`POST /orders`) están restringidos exclusivamente para el rol **`CLIENTE`**.
 
 ---
 
-## Endpoints de Carrito (`/cart`)
+## Endpoints de Carrito (`/cart`) — *Solo Rol CLIENTE**
 
 ### 1. Obtener Carrito del Usuario
 * **Método**: `GET /cart`
+* **Permisos**: Requiere token con `rol: "CLIENTE"` (Otros roles reciben `403 Forbidden`)
 * **Headers**: `Authorization: Bearer <JWT_TOKEN>`
 * **Respuesta Exitosa (200 OK)**:
   ```json

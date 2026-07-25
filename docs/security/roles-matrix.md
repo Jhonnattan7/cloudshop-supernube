@@ -4,9 +4,9 @@
 
 | Role | Who uses it |
 |---|---|
-| `ADMIN` | Platform administrator - full access |
-| `OPERADOR` | Store operator - inventory and orders |
-| `CLIENTE` | End customer - own cart and orders |
+| `ADMIN` | Platform administrator - users, stores, products, order status management and reports |
+| `OPERADOR` | Store operator - inventory and order status |
+| `CLIENTE` | End customer - cart, checkout, and own orders |
 
 Legend: ✓ allowed - — not allowed - ✓* restricted (own resources only)
 
@@ -40,12 +40,12 @@ Legend: ✓ allowed - — not allowed - ✓* restricted (own resources only)
 
 | Endpoint | Method | ADMIN | OPERADOR | CLIENTE | Notes |
 |---|---|---|---|---|---|
-| `/cart` | GET | ✓ | — | ✓* | Own cart only |
-| `/cart/items` | POST | ✓ | — | ✓ | Add item to cart |
-| `/cart/items/{productId}` | PUT | ✓ | — | ✓* | Modify quantity - own cart only |
-| `/cart/items/{productId}` | DELETE | ✓ | — | ✓* | Remove item - own cart only |
-| `/cart` | DELETE | ✓ | — | ✓* | Clear cart - own cart only |
-| `/orders` | POST | ✓ | ✓ | ✓ | Create order from cart - triggers ORDER_CREATED |
+| `/cart` | GET | — | — | ✓* | Own cart only |
+| `/cart/items` | POST | — | — | ✓ | Add item to cart |
+| `/cart/items/{productId}` | PUT | — | — | ✓* | Modify quantity - own cart only |
+| `/cart/items/{productId}` | DELETE | — | — | ✓* | Remove item - own cart only |
+| `/cart` | DELETE | — | — | ✓* | Clear cart - own cart only |
+| `/orders` | POST | — | — | ✓ | Create order from cart - triggers ORDER_CREATED |
 | `/orders` | GET | ✓ | ✓ | — | List all orders |
 | `/orders/{id}` | GET | ✓ | ✓ | ✓* | CLIENTE sees own orders only |
 | `/orders/{id}/status` | PUT | ✓ | ✓ | — | Update order status |

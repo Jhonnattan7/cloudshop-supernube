@@ -18,31 +18,31 @@ exports.handler = async (event) => {
   try {
     const rol = event.requestContext?.authorizer?.rol;
 
-    // --- Carrito: reservado para CLIENTE y ADMIN
+    // --- Carrito: reservado exclusivamente para CLIENTE
     if (event.resource === '/cart' && event.httpMethod === 'GET') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no tiene carrito de compras');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE tienen carrito de compras');
       return await getCartHandler(event);
     }
     if (event.resource === '/cart' && event.httpMethod === 'DELETE') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no tiene carrito de compras');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE pueden vaciar el carrito');
       return await clearCartHandler(event);
     }
     if (event.resource === '/cart/items' && event.httpMethod === 'POST') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no puede agregar productos al carrito');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE pueden agregar productos al carrito');
       return await addItemHandler(event);
     }
     if (event.resource === '/cart/items/{productId}' && event.httpMethod === 'PUT') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no puede modificar el carrito');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE pueden modificar el carrito');
       return await updateItemHandler(event);
     }
     if (event.resource === '/cart/items/{productId}' && event.httpMethod === 'DELETE') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no puede modificar el carrito');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE pueden eliminar items del carrito');
       return await removeItemHandler(event);
     }
 
     // --- Pedidos ---
     if (event.resource === '/orders' && event.httpMethod === 'POST') {
-      if (rol === 'OPERADOR') return errorResponse(403, 'FORBIDDEN', 'OPERADOR no puede crear pedidos');
+      if (rol !== 'CLIENTE') return errorResponse(403, 'FORBIDDEN', 'Solo usuarios con rol CLIENTE pueden crear pedidos');
       return await createOrderHandler(event);
     }
     if (event.resource === '/orders' && event.httpMethod === 'GET') {

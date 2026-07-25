@@ -25,9 +25,9 @@ Authorization: Bearer <token>
 
 | Value | Description |
 |---|---|
-| `ADMIN` | Full access — users, stores, products, reports |
-| `OPERADOR` | Inventory and order management |
-| `CLIENTE` | Own cart and own orders only |
+| `ADMIN` | Administrative access — users, stores, products, order status, reports |
+| `OPERADOR` | Inventory and order status management |
+| `CLIENTE` | Purchasing role — own cart, checkout, and own orders |
 
 ## Endpoints
 
