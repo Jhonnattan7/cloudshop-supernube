@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Ejecutivo — CloudShop Enterprise</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Barra de Navegación -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><img src="img/Vector.svg" class="brand-logo"
+        alt="CloudShop Logo">CloudShop</a>
+    <ul class="nav-links" id="nav-links">
+      <!-- Llenado dinámico -->
+    </ul>
+    <div class="nav-user-panel" id="nav-user-panel">
+      <!-- Llenado dinámico -->
+    </div>
+  </nav>
+
+  <!-- Contenedor Principal Dashboard -->
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <h2 class="page-title">Dashboard Ejecutivo</h2>
+        <p class="page-subtitle">Reportes consolidados y métricas en tiempo real.</p>
+      </div>
+      <button onclick="loadDashboardData()" class="btn-primary"
+        style="background: rgba(236, 72, 153, 0.1); border: 1px solid var(--primary); color: var(--primary); display:flex; align-items:center; justify-content:center;">
+        <i class="fi fi-rr-refresh" style="margin-right:0.4rem;"></i> Recargar Métricas
+      </button>
+    </div>
+
+    <!-- Grilla de Tarjetas Métricas Superiores (Rediseño Estilo Mock) -->
+    <div class="dashboard-grid">
+      <!-- Total Ventas -->
+      <div class="stat-card stat-card-highlight">
+        <div class="stat-arrow"><i class="fi fi-rr-usd-square" style="font-size:0.9rem;"></i></div>
+        <div>
+          <div class="stat-label">Total Ventas Acumuladas</div>
+          <div class="stat-val" id="stat-total-ventas">$0.00</div>
+        </div>
+      </div>
+
+      <!-- Pedidos Activos -->
+      <div class="stat-card">
+        <div class="stat-arrow"><i class="fi fi-rr-shopping-bag" style="font-size:0.9rem;"></i></div>
+        <div>
+          <div class="stat-label">Pedidos Activos</div>
+          <div class="stat-val" id="stat-pedidos-activos">0</div>
+        </div>
+        <div class="stat-trend">Operaciones en curso</div>
+      </div>
+
+      <!-- Productos Agotados -->
+      <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.25);">
+        <div class="stat-arrow" style="border-color: rgba(239, 68, 68, 0.2); color:#dc2626;"><i
+            class="fi fi-rr-exclamation" style="font-size:0.9rem;"></i></div>
+        <div>
+          <div class="stat-label" style="color: #b91c1c;">Productos Agotados</div>
+          <div class="stat-val" id="stat-prod-agotados" style="color: #dc2626;">0</div>
+        </div>
+        <div class="stat-trend" style="color:#b91c1c;">Requiere reposición</div>
+      </div>
+
+      <!-- Clientes Distintos -->
+      <div class="stat-card">
+        <div class="stat-arrow"><i class="fi fi-rr-users" style="font-size:0.9rem;"></i></div>
+        <div>
+          <div class="stat-label">Clientes Compradores</div>
+          <div class="stat-val" id="stat-clientes-activos">0</div>
+        </div>
+        <div class="stat-trend">Registrados en la tienda</div>
+      </div>
+    </div>
+
+    <!-- Detalle de Estados de Pedidos -->
+    <div class="glass-panel" style="margin-bottom: 2rem;">
+      <h3 style="margin-bottom: 1.25rem;">Pedidos por Estado</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between;" id="order-status-row">
+        <!-- Llenado dinámico de badges con contadores -->
+      </div>
+    </div>
+
+    <!-- Tendencia de Ventas Mensuales (Gráfico de Línea Plano) -->
+    <div class="glass-panel" style="margin-bottom: 2rem;">
+      <h3 style="margin-bottom: 0.5rem;">Tendencia de Ventas Mensuales</h3>
+      <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Evolución de ingresos mensuales acumulados de pedidos confirmados y entregados.</p>
+      <div id="chart-sales-history" style="width: 100%; min-height: 220px; overflow-x: auto;">
+        <!-- Gráfico SVG renderizado dinámicamente -->
+      </div>
+    </div>
+
+    <!-- Grillas Detalladas Inferiores -->
+    <div class="dashboard-details-grid">
+
+      <!-- Ventas por Tienda (Barras Horizontales) -->
+      <div class="glass-panel">
+        <h3>Ventas por Tienda ($)</h3>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Porcentaje e importe acumulado de
+          pedidos completados.</p>
+        <div class="chart-fallback-bar" id="chart-sales-store">
+          <!-- Barras cargadas dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Productos Más Vendidos (Gráfico de Barras Verticales de Píldoras - Top 3) -->
+      <div class="glass-panel">
+        <h3>Productos Más Vendidos (Top 3)</h3>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Top 3 productos con mayor volumen de
+          unidades vendidas.</p>
+        <div class="chart-v-container" id="chart-best-sellers">
+          <!-- Columnas de píldoras cargadas dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Alertas de Inventario Bajo -->
+      <div class="glass-panel" style="border-color: rgba(239, 68, 68, 0.15);">
+        <h3 style="color: #b91c1c; margin-bottom: 1rem;">Alertas de Inventario Agotado</h3>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Listado de productos que requieren
+          reposición urgente (stock menor o igual a 0).</p>
+        <div id="alerts-stock-container" style="max-height: 250px; overflow-y: auto;">
+          <!-- Listado de alertas -->
+        </div>
+      </div>
+
+      <!-- Clientes con Mayor Consumo -->
+      <div class="glass-panel">
+        <h3>Clientes con Mayor Número de Compras</h3>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Top compradores ordenados por dinero
+          gastado en la tienda.</p>
+        <table class="order-items-table" style="margin-top: 1rem;">
+          <thead>
+            <tr>
+              <th>ID Cliente</th>
+              <th>Cantidad Pedidos</th>
+              <th style="text-align:right;">Total Gastado ($)</th>
+            </tr>
+          </thead>
+          <tbody id="top-clients-table">
+            <!-- Filas dinámicas -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script>
+    window.onload = async () => {
+      // Proteger ruta para ADMIN únicamente
+      if (!requireAuth(["ADMIN"])) return;
+
+      updateNavbar();
+      await loadDashboardData();
+    };
+
+    // Consultar y renderizar datos del Dashboard
+    async function loadDashboardData() {
+      const salesContainer = document.getElementById("chart-sales-store");
+      const sellersContainer = document.getElementById("chart-best-sellers");
+      const alertsContainer = document.getElementById("alerts-stock-container");
+      const clientsTable = document.getElementById("top-clients-table");
+      const statusRow = document.getElementById("order-status-row");
+
+      document.getElementById("chart-sales-history").innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted);">Cargando tendencia de ventas...</div>';
+      salesContainer.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--text-muted);">Cargando ventas...</div>';
+      sellersContainer.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--text-muted); width:100%;">Cargando productos...</div>';
+      alertsContainer.innerHTML = '<div style="text-align:center; padding:1.5rem; color:var(--text-muted);">Cargando alertas...</div>';
+      clientsTable.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Cargando clientes...</td></tr>';
+
+      try {
+        const data = await apiFetch("/reports/dashboard");
+
+        // 1. Tarjetas Superiores
+        document.getElementById("stat-total-ventas").textContent = `$${data.totalVentas.toFixed(2)}`;
+
+        const pedidosActivos = (data.pedidosPorEstado.CONFIRMADO || 0) +
+          (data.pedidosPorEstado.EN_PREPARACION || 0) +
+          (data.pedidosPorEstado.ENVIADO || 0);
+        document.getElementById("stat-pedidos-activos").textContent = pedidosActivos;
+
+        const agotadosCount = data.productosAgotados ? data.productosAgotados.length : 0;
+        document.getElementById("stat-prod-agotados").textContent = agotadosCount;
+
+        const clientesCount = data.clientesConMasCompras ? data.clientesConMasCompras.length : 0;
+        document.getElementById("stat-clientes-activos").textContent = clientesCount;
+
+        // 2. Pedidos por Estado
+        statusRow.innerHTML = "";
+        const estados = ["PENDIENTE", "CONFIRMADO", "EN_PREPARACION", "ENVIADO", "ENTREGADO", "CANCELADO"];
+        estados.forEach(est => {
+          const count = data.pedidosPorEstado[est] || 0;
+          const statusBadge = document.createElement("div");
+          statusBadge.className = "status-badge-card";
+
+          statusBadge.innerHTML = `
+            <span class="badge-estado badge-${est.toLowerCase()}" style="text-align:center; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:0.72rem;">${est}</span>
+            <span style="font-size:1.6rem; font-weight:700; color:var(--text-main); margin-top:0.25rem;">${count}</span>
+          `;
+          statusRow.appendChild(statusBadge);
+        });
+
+        // 3. Ventas por Tienda (Barras de progreso CSS Horizontales)
+        salesContainer.innerHTML = "";
+        if (!data.ventasPorTienda || data.ventasPorTienda.length === 0) {
+          salesContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding: 1.5rem 0;">No hay ventas registradas.</div>';
+        } else {
+          const maxStoreVal = Math.max(...data.ventasPorTienda.map(s => s.total), 1);
+          data.ventasPorTienda.forEach(store => {
+            const percentage = (store.total / maxStoreVal) * 100;
+            const row = document.createElement("div");
+            row.className = "bar-row";
+            row.innerHTML = `
+              <div class="bar-label" title="${store.tienda}">${store.tienda}</div>
+              <div class="bar-outer">
+                <div class="bar-inner" style="width: ${percentage}%; background: var(--primary);"></div>
+              </div>
+              <div class="bar-val">$${store.total.toFixed(2)}</div>
+            `;
+            salesContainer.appendChild(row);
+          });
+        }
+
+        // 4. Productos Más Vendidos (Gráfico de Barras Verticales de Píldoras - Top 3)
+        sellersContainer.innerHTML = "";
+        if (!data.productosMasVendidos || data.productosMasVendidos.length === 0) {
+          sellersContainer.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:3rem; width:100%;">No hay unidades vendidas aún.</div>';
+        } else {
+          // Tomar solo el top 3
+          const topProducts = data.productosMasVendidos.slice(0, 3);
+          const maxQtyVal = Math.max(...topProducts.map(p => p.cantidadVendida), 1);
+
+          // Paleta de colores planos curada estrictamente de la paleta del usuario (sin degradados)
+          const categoryColors = {
+            "Electronica": "#2a7d8f", // Acento (Teal)
+            "Accesorios": "#c85eb5",  // Primario (Rosado Orchid)
+            "Ropa": "#9a5495",        // Morado / Púrpura pastel
+            "Hogar": "#2d3b55",       // Azul Marino / Slate
+            "Otros": "#8395b8"        // Gris plata / Azulino suave
+          };
+
+          topProducts.forEach(prod => {
+            const percentage = (prod.cantidadVendida / maxQtyVal) * 100;
+            const col = document.createElement("div");
+            col.className = "chart-v-col";
+            const barBg = categoryColors[prod.categoria] || "var(--primary)";
+            col.innerHTML = `
+              <div style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-main);">${prod.cantidadVendida}</div>
+              <div class="chart-v-track">
+                <div class="chart-v-fill" style="height: ${percentage}%; background: ${barBg};"></div>
+                <div class="chart-v-tooltip">${prod.nombre} (${prod.categoria || 'Otros'}): ${prod.cantidadVendida} uds.</div>
+              </div>
+              <div class="chart-v-label" title="${prod.nombre}">${prod.nombre}</div>
+            `;
+            sellersContainer.appendChild(col);
+          });
+        }
+
+        // 5. Alertas de Stock Agotado
+        alertsContainer.innerHTML = "";
+        if (!data.productosAgotados || data.productosAgotados.length === 0) {
+          alertsContainer.innerHTML = `
+            <div style="color:var(--success); text-align:center; padding: 2rem; font-weight:600;">
+              Todo el catálogo tiene inventario disponible. No hay alertas.
+            </div>
+          `;
+        } else {
+          // Resolver nombres de tiendas para mostrar de dónde es el producto agotado
+          let storesCache = {};
+          try {
+            const storesRes = await apiFetch("/stores");
+            storesRes.stores.forEach(s => { storesCache[s.storeId] = s.nombre; });
+          } catch (e) { console.error(e); }
+
+          data.productosAgotados.forEach(prod => {
+            const storeName = storesCache[prod.storeId] || "Tienda Central";
+            const alertDiv = document.createElement("div");
+            alertDiv.className = "alert-item";
+            alertDiv.innerHTML = `
+              <div>
+                <strong>${prod.nombre}</strong>
+                <div class="alert-store">Tienda: ${storeName}</div>
+              </div>
+              <span style="font-weight:700; color:#b91c1c; background:#fee2e2; padding:2px 8px; border-radius:4px; border:1px solid #fca5a5;">AGOTADO</span>
+            `;
+            alertsContainer.appendChild(alertDiv);
+          });
+        }
+
+        // 6. Tabla de Clientes con Mayor Número de Compras
+        clientsTable.innerHTML = "";
+        if (!data.clientesConMasCompras || data.clientesConMasCompras.length === 0) {
+          clientsTable.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sin compras de clientes.</td></tr>';
+        } else {
+          // En modo mock, podemos obtener el nombre real de cada cliente para mostrarlo
+          let usersMap = {};
+          if (USE_MOCK) {
+            const users = JSON.parse(localStorage.getItem("mock_users") || "[]");
+            users.forEach(u => { usersMap[u.userId] = u.nombre; });
+          }
+
+          data.clientesConMasCompras.forEach(client => {
+            const clientName = usersMap[client.userId] || client.userId;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><strong>${clientName}</strong></td>
+              <td>${client.cantidadPedidos} pedido${client.cantidadPedidos === 1 ? '' : 's'}</td>
+              <td style="text-align:right; font-weight:600; color:var(--primary);">$${client.totalGastado.toFixed(2)}</td>
+            `;
+            clientsTable.appendChild(tr);
+          });
+        }
+
+        // 7. Renderizar Gráfico de Línea de Tendencia de Ventas (SVG Plano)
+        drawSalesChart(data.historicoVentas);
+
+        showToast("Métricas actualizadas", "success");
+
+      } catch (err) {
+        showToast("Error al cargar reportes: " + err.message, "error");
+      }
+    }
+
+    // Dibujar gráfico de tendencia en SVG plano (sin librerías y sin degradados)
+    function drawSalesChart(history) {
+      const container = document.getElementById("chart-sales-history");
+      if (!container) return;
+
+      if (!history || history.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding: 3rem 0;">No hay datos de ventas para mostrar.</div>';
+        return;
+      }
+
+      // Anchura dinámica o fallback de 800px
+      const width = container.clientWidth || 800;
+      const height = 220;
+      const paddingLeft = 65;
+      const paddingRight = 40;
+      const paddingTop = 25;
+      const paddingBottom = 40;
+
+      const chartWidth = width - paddingLeft - paddingRight;
+      const chartHeight = height - paddingTop - paddingBottom;
+
+      const maxVal = Math.max(...history.map(h => h.total), 100);
+      const minVal = 0;
+
+      const points = history.map((h, i) => {
+        const x = paddingLeft + (i / (history.length - 1)) * chartWidth;
+        const y = height - paddingBottom - ((h.total - minVal) / (maxVal - minVal)) * chartHeight;
+        return { x, y, label: h.mes, value: h.total };
+      });
+
+      // Ruta del trazado
+      let dLine = "";
+      points.forEach((p, i) => {
+        if (i === 0) dLine += `M ${p.x} ${p.y}`;
+        else dLine += ` L ${p.x} ${p.y}`;
+      });
+
+      // Ruta de la máscara de fondo plana (polígono cerrado)
+      const dFill = `${dLine} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`;
+
+      let svgHTML = `
+        <svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible; display: block; margin: 0 auto;">
+          <!-- Líneas de cuadrícula de fondo -->
+          <line x1="${paddingLeft}" y1="${paddingTop}" x2="${width - paddingRight}" y2="${paddingTop}" stroke="rgba(0,0,0,0.05)" stroke-width="1" stroke-dasharray="4,4" />
+          <line x1="${paddingLeft}" y1="${paddingTop + chartHeight/2}" x2="${width - paddingRight}" y2="${paddingTop + chartHeight/2}" stroke="rgba(0,0,0,0.05)" stroke-width="1" stroke-dasharray="4,4" />
+          <line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" stroke="rgba(0,0,0,0.1)" stroke-width="1.5" />
+          
+          <!-- Etiquetas del eje Y (Valores) -->
+          <text x="${paddingLeft - 12}" y="${paddingTop + 4}" fill="var(--text-muted)" font-size="11" font-weight="600" text-anchor="end">$${maxVal.toFixed(0)}</text>
+          <text x="${paddingLeft - 12}" y="${paddingTop + chartHeight/2 + 4}" fill="var(--text-muted)" font-size="11" font-weight="600" text-anchor="end">$${(maxVal/2).toFixed(0)}</text>
+          <text x="${paddingLeft - 12}" y="${height - paddingBottom + 4}" fill="var(--text-muted)" font-size="11" font-weight="600" text-anchor="end">$0</text>
+          
+          <!-- Relleno plano de color rosado sólido con baja opacidad (sin degradados) -->
+          <path d="${dFill}" fill="var(--primary)" opacity="0.06" stroke="none" />
+          
+          <!-- Trazado de línea de tendencia de color sólido (sin degradados) -->
+          <path d="${dLine}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+      `;
+
+      points.forEach((p) => {
+        svgHTML += `
+          <!-- Etiquetas del eje X (Meses) -->
+          <text x="${p.x}" y="${height - 15}" fill="var(--text-muted)" font-size="11" font-weight="600" text-anchor="middle">${p.label}</text>
+          
+          <!-- Marcadores de puntos y valores textuales -->
+          <g>
+            <text x="${p.x}" y="${p.y - 12}" fill="var(--text-main)" font-size="10" font-weight="700" text-anchor="middle">$${p.value.toFixed(2)}</text>
+            <circle cx="${p.x}" cy="${p.y}" r="6.5" fill="var(--primary)" stroke="#ffffff" stroke-width="2.5" />
+          </g>
+        `;
+      });
+
+      svgHTML += `</svg>`;
+      container.innerHTML = svgHTML;
+    }
+  </script>
+</body>
+
+</html>
