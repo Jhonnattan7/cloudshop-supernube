@@ -1257,39 +1257,9 @@ function requireAuth(allowedRoles = null) {
 // Convertir selectores nativos en selectores personalizados estilizados
 function makeCustomSelects() {
   document.querySelectorAll("select.filter-select").forEach(select => {
-    // Si ya existe el wrapper personalizado, lo actualizamos con las nuevas opciones
+    // Si ya existe el wrapper personalizado, lo removemos para volverlo a construir de forma limpia sin duplicados
     if (select.nextElementSibling && select.nextElementSibling.classList.contains("custom-select-wrapper")) {
-      const wrapper = select.nextElementSibling;
-      const triggerText = wrapper.querySelector(".custom-select-trigger-text");
-      const dropdown = wrapper.querySelector(".custom-select-dropdown");
-      
-      triggerText.textContent = select.options[select.selectedIndex]?.textContent || "";
-      dropdown.innerHTML = "";
-      
-      // Actualizar estado disabled dinámicamente
-      if (select.disabled) {
-        wrapper.classList.add("disabled");
-      } else {
-        wrapper.classList.remove("disabled");
-      }
-      
-      Array.from(select.options).forEach(opt => {
-        const customOpt = document.createElement("div");
-        customOpt.className = "custom-select-option" + (opt.selected ? " selected" : "");
-        customOpt.textContent = opt.textContent;
-        
-        customOpt.onclick = (e) => {
-          e.stopPropagation();
-          select.value = opt.value;
-          triggerText.textContent = opt.textContent;
-          dropdown.querySelectorAll(".custom-select-option").forEach(o => o.classList.remove("selected"));
-          customOpt.classList.add("selected");
-          wrapper.classList.remove("open");
-          select.dispatchEvent(new Event("change"));
-        };
-        dropdown.appendChild(customOpt);
-      });
-      return;
+      select.nextElementSibling.remove();
     }
 
     // Crear el contenedor personalizado

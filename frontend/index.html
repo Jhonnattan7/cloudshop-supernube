@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo — CloudShop Enterprise</title>
   <link rel="stylesheet" href="style.css">
+  <script>
+    (function() {
+      const token = localStorage.getItem("jwt_token");
+      if (!token) {
+        window.location.href = "login.html";
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -250,6 +258,9 @@
     let productsList = [];
 
     window.onload = async () => {
+      // Redirigir al login si no hay sesión activa
+      if (!requireAuth()) return;
+
       updateNavbar();
       
       const role = localStorage.getItem("jwt_role");

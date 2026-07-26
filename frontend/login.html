@@ -29,12 +29,6 @@
 
       <!-- FORMULARIO DE INICIO DE SESIÓN -->
       <form id="form-login" onsubmit="handleLogin(event)">
-        <div class="auth-info-box">
-          <strong>Credenciales Semilla (ADMIN):</strong><br>
-          Email: <code>admin@cloudshop.com</code><br>
-          Contraseña: <code>AdminSecretPassword123!</code>
-        </div>
-
         <div class="form-group">
           <label class="form-label" for="login-email">Correo Electrónico</label>
           <input class="form-input" type="email" id="login-email" required placeholder="correo@ejemplo.com">
@@ -53,12 +47,6 @@
         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
           Ingresar al Portal
         </button>
-
-        <div style="margin-top: 1.25rem; padding: 0.85rem; background: rgba(236, 72, 153, 0.06); border: 1px dashed var(--primary); border-radius: 8px; font-size: 0.8rem; color: var(--text-main);">
-          <strong>Credenciales de Prueba (Demo Cátedra):</strong><br>
-          <span>Email: <code>admin@cloudshop.com</code></span><br>
-          <span>Password: <code>AdminSecretPassword123!</code></span>
-        </div>
       </form>
 
       <!-- FORMULARIO DE REGISTRO -->
@@ -83,19 +71,12 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="reg-role">Rol Deseado (Simulación)</label>
-          <select class="filter-select" id="reg-role" style="width: 100%; padding: 0.75rem 1rem;">
-            <option value="CLIENTE">Cliente (Comprador)</option>
-            <option value="OPERADOR">Operador (Inventarios / Pedidos)</option>
-            <option value="ADMIN">Administrador (Control Total)</option>
-          </select>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.3;">
-            [Nota de AWS] En producción, el registro público asigna automáticamente el rol <strong>CLIENTE</strong> por seguridad. Los roles ADMIN/OPERADOR se asignan a nivel de base de datos.
-          </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--panel-border);">
+          <i class="fi fi-rr-shield-check" style="color: var(--primary); margin-right: 0.3rem;"></i>
+          El registro de cuenta asigna automáticamente el rol <strong>CLIENTE</strong>.
         </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">
           Crear Cuenta
         </button>
       </form>
@@ -157,10 +138,9 @@
       const nombre = document.getElementById("reg-name").value.trim();
       const email = document.getElementById("reg-email").value.trim();
       const password = document.getElementById("reg-password").value;
-      const rol = document.getElementById("reg-role").value;
 
       try {
-        const bodyData = { nombre, email, password, rol };
+        const bodyData = { nombre, email, password };
         const response = await apiFetch("/auth/register", {
           method: "POST",
           body: JSON.stringify(bodyData)
