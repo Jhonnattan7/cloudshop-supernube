@@ -36,3 +36,8 @@ node_modules/
 .postman/
 postman/
 
+# Environment files
+.env
+.env.*
+
+
