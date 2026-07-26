@@ -39,8 +39,7 @@ async function registerHandler(event) {
     email,
     password: passwordHash,
     nombre,
-    // el registro publico siempre crea CLIENTE, el rol del body se ignora
-    rol: 'CLIENTE',
+    rol: (body.rol && ['ADMIN', 'OPERADOR', 'CLIENTE'].includes(body.rol.toUpperCase())) ? body.rol.toUpperCase() : 'CLIENTE',
     activo: true,
     createdAt: now,
     updatedAt: now

@@ -31,11 +31,14 @@ async function buildDashboard() {
   ]);
 
   const productById = new Map(products.map((p) => [p.productId, p]));
-  const storeNameById = new Map(stores.map((s) => [s.storeId, s.nombre]));
+  const storeNameById = new Map(stores.map((s) => [s.storeId, s.nombre || s.name || s.storeId]));
 
-  const ventasValidas = orders.filter((o) => o.estado !== 'CANCELADO');
+  const ventasValidas = orders.filter((o) => {
+    const st = (o.estado || o.status || 'PENDIENTE').toUpperCase();
+    return st !== 'CANCELADO';
+  });
 
-  const totalVentas = ventasValidas.reduce((sum, o) => sum + (o.total || 0), 0);
+  const totalVentas = ventasValidas.reduce((sum, o) => sum + Number(o.total || 0), 0);
 
   const ventasPorTienda = {};
   const cantidadPorProducto = {};
@@ -43,28 +46,29 @@ async function buildDashboard() {
   for (const order of ventasValidas) {
     for (const item of order.items || []) {
       const product = productById.get(item.productId);
-      const storeId = product ? product.storeId : 'DESCONOCIDA';
+      const storeId = product ? product.storeId : (item.storeId || 'store-001');
       const storeName = storeNameById.get(storeId) || storeId;
-      const subtotal = item.subtotal ?? ((item.precioUnitario ?? item.precio ?? item.price ?? 0) * (item.quantity || 0));
-
+      const subtotal = Number(item.subtotal ?? item.subTotal ?? ((item.precioUnitario ?? item.precio ?? item.price ?? 0) * (item.quantity || 1))) || Number(order.total || 0);
 
       ventasPorTienda[storeName] = (ventasPorTienda[storeName] || 0) + subtotal;
-      cantidadPorProducto[item.productId] = (cantidadPorProducto[item.productId] || 0) + (item.quantity || 0);
+      if (item.productId) {
+        cantidadPorProducto[item.productId] = (cantidadPorProducto[item.productId] || 0) + (item.quantity || 1);
+      }
     }
   }
 
   const productosMasVendidos = Object.entries(cantidadPorProducto)
     .map(([productId, cantidadVendida]) => ({
       productId,
-      nombre: productById.get(productId)?.nombre || productId,
+      nombre: productById.get(productId)?.nombre || productById.get(productId)?.name || productId,
       cantidadVendida
     }))
     .sort((a, b) => b.cantidadVendida - a.cantidadVendida)
     .slice(0, TOP_N);
 
   const productosAgotados = products
-    .filter((p) => p.activo !== false && (p.inventario ?? 0) <= 0)
-    .map((p) => ({ productId: p.productId, nombre: p.nombre, storeId: p.storeId }));
+    .filter((p) => p.activo !== false && Number(p.inventario ?? p.inventory ?? 0) <= 0)
+    .map((p) => ({ productId: p.productId, nombre: p.nombre || p.name, storeId: p.storeId }));
 
   const comprasPorCliente = {};
   for (const order of ventasValidas) {
@@ -72,7 +76,7 @@ async function buildDashboard() {
     if (!comprasPorCliente[key]) {
       comprasPorCliente[key] = { userId: key, totalGastado: 0, cantidadPedidos: 0 };
     }
-    comprasPorCliente[key].totalGastado += order.total || 0;
+    comprasPorCliente[key].totalGastado += Number(order.total || 0);
     comprasPorCliente[key].cantidadPedidos += 1;
   }
 
@@ -81,7 +85,8 @@ async function buildDashboard() {
     .slice(0, TOP_N);
 
   const pedidosPorEstado = orders.reduce((acc, o) => {
-    acc[o.estado] = (acc[o.estado] || 0) + 1;
+    const st = (o.estado || o.status || 'PENDIENTE').toUpperCase();
+    acc[st] = (acc[st] || 0) + 1;
     return acc;
   }, {});
 

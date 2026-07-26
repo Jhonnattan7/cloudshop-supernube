@@ -26,6 +26,7 @@ Para evaluar de inmediato la aplicación desde la web o mediante Postman:
 | Rol | Email | Contraseña | Permisos y Alcance |
 | :--- | :--- | :--- | :--- |
 | **ADMINISTRADOR** | `admin@cloudshop.com` | `AdminSecretPassword123!` | Crear/editar/eliminar tiendas y productos, gestionar usuarios, actualizar estado de cualquier pedido y consultar el Dashboard Ejecutivo. |
+| **OPERADOR** | `operador@cloudshop.com` | `OperadorPassword123!` | Gestionar inventario de productos y actualizar estados de pedidos (PENDIENTE -> CONFIRMADO -> EN_PREPARACION -> ENVIADO -> ENTREGADO). |
 | **CLIENTE (Ejemplo)** | `susana@cloudshop.com` | `SusanaPassword123!` | Explorar catálogo de productos, agregar items al carrito, confirmar pedidos y consultar el historial de pedidos propios. |
 | **REGISTRO LIBRE** | *Cualquier correo* | *Cualquier clave* | En la pantalla de inicio de sesión (`login.html`), la catedrática puede usar la pestaña **"Registrarse"** para crear al instante nuevos usuarios con rol **`CLIENTE`** de acuerdo al principio de mínimo privilegio. |
 
