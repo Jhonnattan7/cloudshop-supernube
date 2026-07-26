@@ -149,6 +149,7 @@ module "api_gateway" {
     aws_api_gateway_method.reports_dashboard_options.id,
     aws_api_gateway_gateway_response.cors_4xx.id,
     aws_api_gateway_gateway_response.cors_5xx.id,
+    "v2.0-idempotency-key-cors-fix"
   ]))
 }
 
