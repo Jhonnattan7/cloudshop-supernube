@@ -565,6 +565,10 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{clientToken}}"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "checkout-prueba-001"
 							}
 						],
 						"url": {

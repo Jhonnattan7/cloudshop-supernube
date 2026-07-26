@@ -20,6 +20,27 @@ const TRANSITIONS = {
 
 const CANCELABLE_STATES = ['PENDIENTE', 'CONFIRMADO', 'EN_PREPARACION'];
 
+function getHeader(event, headerName) {
+  const headers = event.headers || {};
+  const expectedName = headerName.toLowerCase();
+
+  const matchingHeader = Object.keys(headers).find(
+    (key) => key.toLowerCase() === expectedName
+  );
+
+  return matchingHeader ? headers[matchingHeader] : undefined;
+}
+
+function buildIdempotentOrderId(userId, idempotencyKey) {
+  const hash = crypto
+    .createHash('sha256')
+    .update(`${userId}:${idempotencyKey}`)
+    .digest('hex')
+    .slice(0, 32);
+
+  return `ord_${hash}`;
+}
+
 async function getOrderById(orderId) {
   const result = await docClient.send(new QueryCommand({
     TableName: ORDERS_TABLE,
@@ -33,23 +54,79 @@ async function createOrderHandler(event) {
   const userId = event.requestContext.authorizer.userId;
   const email = event.requestContext.authorizer.email;
 
+  const idempotencyKey = getHeader(event, 'Idempotency-Key');
+
+  if (
+    !idempotencyKey ||
+    typeof idempotencyKey !== 'string' ||
+    idempotencyKey.trim().length < 8 ||
+    idempotencyKey.trim().length > 128
+  ) {
+    return errorResponse(
+      400,
+      'VALIDATION_ERROR',
+      'El header Idempotency-Key es obligatorio y debe tener entre 8 y 128 caracteres'
+    );
+  }
+
+  const normalizedIdempotencyKey = idempotencyKey.trim();
+  const orderId = buildIdempotentOrderId(
+    userId,
+    normalizedIdempotencyKey
+  );
+
+  /*
+   * Se comprueba primero si esta operación ya creó un pedido.
+   * Esto evita volver a consultar el carrito o publicar otro evento
+   * cuando el cliente repite exactamente el mismo checkout.
+   */
+  const existingOrder = await getOrderById(orderId);
+
+  if (existingOrder) {
+    if (existingOrder.userId !== userId) {
+      return errorResponse(
+        409,
+        'IDEMPOTENCY_CONFLICT',
+        'La clave de idempotencia ya fue utilizada'
+      );
+    }
+
+    return successResponse(200, {
+      ...existingOrder,
+      idempotentReplay: true
+    });
+  }
+
   const cartItems = await getCartItems(userId);
+
   if (cartItems.length === 0) {
-    return errorResponse(400, 'VALIDATION_ERROR', 'El carrito esta vacio');
+    return errorResponse(
+      400,
+      'VALIDATION_ERROR',
+      'El carrito esta vacio'
+    );
   }
 
   const orderItems = [];
   let total = 0;
 
-  // Se valida stock/existencia contra Catalog en tiempo real
   for (const cartItem of cartItems) {
     const product = await getProductById(cartItem.productId);
 
     if (!product || product.activo === false) {
-      return errorResponse(400, 'VALIDATION_ERROR', `El producto ${cartItem.productId} ya no esta disponible`);
+      return errorResponse(
+        400,
+        'VALIDATION_ERROR',
+        `El producto ${cartItem.productId} ya no esta disponible`
+      );
     }
+
     if (product.inventario < cartItem.quantity) {
-      return errorResponse(400, 'VALIDATION_ERROR', `Inventario insuficiente para ${product.nombre}`);
+      return errorResponse(
+        400,
+        'VALIDATION_ERROR',
+        `Inventario insuficiente para ${product.nombre}`
+      );
     }
 
     const subtotal = product.precio * cartItem.quantity;
@@ -64,29 +141,82 @@ async function createOrderHandler(event) {
     });
   }
 
-  const orderId = `ord_${crypto.randomUUID()}`;
   const now = new Date().toISOString();
 
   const order = {
     orderId,
     userId,
     email,
+    idempotencyKey: normalizedIdempotencyKey,
     items: orderItems,
     total,
     estado: 'PENDIENTE',
+    eventPublished: false,
     createdAt: now,
     updatedAt: now
   };
 
-  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: order }));
+  try {
+    await docClient.send(
+      new PutCommand({
+        TableName: ORDERS_TABLE,
+        Item: order,
+
+        /*
+         * Aunque lleguen dos peticiones simultáneamente, solamente
+         * una podrá crear el pedido.
+         */
+        ConditionExpression:
+          'attribute_not_exists(orderId) AND attribute_not_exists(userId)'
+      })
+    );
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') {
+      const duplicatedOrder = await getOrderById(orderId);
+
+      if (duplicatedOrder && duplicatedOrder.userId === userId) {
+        return successResponse(200, {
+          ...duplicatedOrder,
+          idempotentReplay: true
+        });
+      }
+
+      return errorResponse(
+        409,
+        'IDEMPOTENCY_CONFLICT',
+        'No se pudo procesar nuevamente este checkout'
+      );
+    }
+
+    throw err;
+  }
 
   await publishOrderCreated({
     orderId,
     userId,
     email,
-    items: orderItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    items: orderItems.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity
+    })),
     total
   });
+
+  await docClient.send(
+    new UpdateCommand({
+      TableName: ORDERS_TABLE,
+      Key: {
+        orderId,
+        userId
+      },
+      UpdateExpression:
+        'SET eventPublished = :published, updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':published': true,
+        ':updatedAt': new Date().toISOString()
+      }
+    })
+  );
 
   await clearCartItems(userId);
 
