@@ -28,7 +28,8 @@ exports.handler = async (event) => {
       };
     }
 
-    const rol = event.requestContext?.authorizer?.rol;
+    const rawRol = event.requestContext?.authorizer?.rol || event.requestContext?.authorizer?.claims?.rol || '';
+    const rol = rawRol.toUpperCase();
 
     // --- Carrito: reservado exclusivamente para CLIENTE
     if (event.resource === '/cart' && event.httpMethod === 'GET') {
@@ -65,7 +66,7 @@ exports.handler = async (event) => {
       return await getOrderHandler(event, rol);
     }
     if (event.resource === '/orders/{orderId}/status' && event.httpMethod === 'PUT') {
-      if (rol !== 'ADMIN' && rol !== 'OPERADOR') {
+      if (rol !== 'ADMIN' && rol !== 'ADMINISTRADOR' && rol !== 'OPERADOR') {
         return errorResponse(403, 'FORBIDDEN', 'Solo ADMIN u OPERADOR pueden actualizar el estado del pedido');
       }
       return await updateStatusHandler(event);

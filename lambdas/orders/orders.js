@@ -47,7 +47,13 @@ async function getOrderById(orderId) {
     KeyConditionExpression: 'orderId = :orderId',
     ExpressionAttributeValues: { ':orderId': orderId }
   }));
-  return (result.Items && result.Items[0]) || null;
+  const item = (result.Items && result.Items[0]) || null;
+  if (item) {
+    const st = item.estado || item.status || 'PENDIENTE';
+    item.estado = st;
+    item.status = st;
+  }
+  return item;
 }
 
 async function createOrderHandler(event) {
@@ -228,30 +234,36 @@ async function listOrdersHandler(event, rol) {
   const qs = event.queryStringParameters || {};
 
   const filters = [];
-  const values = {};
+  const exprValues = {};
+  const exprNames = {};
 
   if (rol === 'CLIENTE') {
-    filters.push('userId = :userId');
-    values[':userId'] = userId;
-  } else if (qs.userId) {
-    filters.push('userId = :userId');
-    values[':userId'] = qs.userId;
+    filters.push('userId = :uid');
+    exprValues[':uid'] = userId;
   }
 
-  if (qs.estado) {
-    filters.push('estado = :estado');
-    values[':estado'] = qs.estado;
+  if (qs.status || qs.estado) {
+    filters.push('(#st = :st OR estado = :st)');
+    exprValues[':st'] = qs.status || qs.estado;
+    exprNames['#st'] = 'status';
   }
 
   const params = { TableName: ORDERS_TABLE };
   if (filters.length > 0) {
     params.FilterExpression = filters.join(' AND ');
-    params.ExpressionAttributeValues = values;
+    params.ExpressionAttributeValues = exprValues;
+    if (Object.keys(exprNames).length > 0) {
+      params.ExpressionAttributeNames = exprNames;
+    }
   }
 
   const result = await docClient.send(new ScanCommand(params));
+  const items = (result.Items || []).map((o) => {
+    const st = o.estado || o.status || 'PENDIENTE';
+    return { ...o, estado: st, status: st };
+  });
 
-  return successResponse(200, { orders: result.Items || [] });
+  return successResponse(200, { orders: items });
 }
 
 async function getOrderHandler(event, rol) {
@@ -292,7 +304,7 @@ async function updateStatusHandler(event) {
     return errorResponse(404, 'NOT_FOUND', 'Order not found');
   }
 
-  const current = existing.estado;
+  const current = existing.estado || existing.status || 'PENDIENTE';
   const allowed = TRANSITIONS[current] || [];
   if (!allowed.includes(estado)) {
     return errorResponse(
@@ -307,11 +319,12 @@ async function updateStatusHandler(event) {
   await docClient.send(new UpdateCommand({
     TableName: ORDERS_TABLE,
     Key: { orderId, userId: existing.userId },
-    UpdateExpression: 'SET estado = :estado, updatedAt = :now',
+    UpdateExpression: 'SET estado = :estado, #st = :estado, updatedAt = :now',
+    ExpressionAttributeNames: { '#st': 'status' },
     ExpressionAttributeValues: { ':estado': estado, ':now': now }
   }));
 
-  return successResponse(200, { orderId, estado, updatedAt: now });
+  return successResponse(200, { orderId, estado, status: estado, updatedAt: now });
 }
 
 // CLIENTE puede cancelar su propio pedido mientras siga en un estado cancelable.
@@ -337,8 +350,9 @@ async function cancelOrderHandler(event, rol) {
     return errorResponse(403, 'FORBIDDEN', 'No puedes cancelar pedidos de otro usuario');
   }
 
-  if (!CANCELABLE_STATES.includes(existing.estado)) {
-    return errorResponse(400, 'VALIDATION_ERROR', `Un pedido en estado ${existing.estado} ya no se puede cancelar`);
+  const current = existing.estado || existing.status || 'PENDIENTE';
+  if (!CANCELABLE_STATES.includes(current)) {
+    return errorResponse(400, 'VALIDATION_ERROR', `Un pedido en estado ${current} ya no se puede cancelar`);
   }
 
   const now = new Date().toISOString();
@@ -346,7 +360,8 @@ async function cancelOrderHandler(event, rol) {
   await docClient.send(new UpdateCommand({
     TableName: ORDERS_TABLE,
     Key: { orderId, userId: existing.userId },
-    UpdateExpression: 'SET estado = :estado, updatedAt = :now',
+    UpdateExpression: 'SET estado = :estado, #st = :estado, updatedAt = :now',
+    ExpressionAttributeNames: { '#st': 'status' },
     ExpressionAttributeValues: { ':estado': 'CANCELADO', ':now': now }
   }));
 
@@ -356,7 +371,7 @@ async function cancelOrderHandler(event, rol) {
     reason: reason || 'No especificada'
   });
 
-  return successResponse(200, { orderId, estado: 'CANCELADO', updatedAt: now });
+  return successResponse(200, { orderId, estado: 'CANCELADO', status: 'CANCELADO', updatedAt: now });
 }
 
 module.exports = {
