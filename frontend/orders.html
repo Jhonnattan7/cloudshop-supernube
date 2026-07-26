@@ -84,7 +84,10 @@
 
       try {
         const data = await apiFetch("/orders");
-        ordersList = data.orders || [];
+        ordersList = (data.orders || []).map(o => ({
+          ...o,
+          estado: o.estado || o.status || "PENDIENTE"
+        }));
 
         // Ordenar pedidos: Activos primero (PENDIENTE, CONFIRMADO, EN_PREPARACION, ENVIADO), Terminales de último (ENTREGADO, CANCELADO).
         // Dentro de cada grupo, ordenar por fecha descendente.
@@ -276,7 +279,7 @@
               <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Realizado: ${dateStr}</div>
               <div style="font-size:0.8rem; color:var(--text-main); font-weight:500; margin-top:0.2rem;">Comprador: ${order.email}</div>
             </div>
-            <span class="badge-estado badge-${order.estado.toLowerCase()}" style="margin-top:0.25rem;">${order.estado}</span>
+            <span class="badge-estado badge-${(order.estado || order.status || "PENDIENTE").toLowerCase()}" style="margin-top:0.25rem;">${order.estado || order.status || "PENDIENTE"}</span>
           </div>
 
           <div style="flex-grow:1; max-height: 40vh; overflow-y:auto; padding-right:0.25rem;">
