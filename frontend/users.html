@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Usuarios — CloudShop Enterprise</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><img src="img/Vector.svg" class="brand-logo" alt="CloudShop Logo">CloudShop</a>
+    <ul class="nav-links" id="nav-links">
+      <!-- Llenado dinámico -->
+    </ul>
+    <div class="nav-user-panel" id="nav-user-panel">
+      <!-- Llenado dinámico -->
+    </div>
+  </nav>
+
+  <!-- Contenedor Principal Usuarios -->
+  <div class="container">
+    <h2 class="page-title">Gestión de Usuarios</h2>
+    <p class="page-subtitle">Administración global de cuentas, roles (ADMIN, OPERADOR, CLIENTE) y estado de acceso.</p>
+
+    <!-- Panel Principal de Usuarios -->
+    <div class="glass-panel" style="padding: 1.5rem; margin-top: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <h3 style="font-size: 1.15rem; color: var(--primary); font-weight: 700;">Usuarios Registrados</h3>
+        <span id="users-count-badge" class="badge-estado" style="background: rgba(236,72,153,0.1); color: var(--primary);">0 usuarios</span>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="order-items-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol Actual</th>
+              <th>Estado</th>
+              <th>Fecha de Registro</th>
+              <th style="text-align: right;">Acciones de Administración</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Cargando usuarios de la plataforma...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script>
+    let usersList = [];
+
+    window.onload = async () => {
+      // Exclusivo para ADMINISTRADOR
+      if (!requireAuth(["ADMIN"])) return;
+
+      updateNavbar();
+      await loadUsers();
+    };
+
+    async function loadUsers() {
+      const tbody = document.getElementById("users-table-body");
+      const badge = document.getElementById("users-count-badge");
+
+      try {
+        const data = await apiFetch("/usuarios");
+        usersList = data.usuarios || data.users || [];
+
+        badge.textContent = `${usersList.length} usuario${usersList.length === 1 ? '' : 's'}`;
+
+        if (usersList.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No hay usuarios registrados.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = "";
+
+        usersList.forEach(user => {
+          const dateStr = user.createdAt ? new Date(user.createdAt).toLocaleDateString("es-ES", {
+            day: "numeric", month: "short", year: "numeric"
+          }) : "N/A";
+
+          const currentRol = (user.rol || "CLIENTE").toUpperCase();
+          const isActivo = user.activo !== false;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${user.nombre || 'Sin Nombre'}</strong></td>
+            <td>${user.email || 'Sin Email'}</td>
+            <td>
+              <select id="role-select-${user.userId}" onchange="changeUserRole('${user.userId}')" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 600; background: #fff;">
+                <option value="CLIENTE" ${currentRol === 'CLIENTE' ? 'selected' : ''}>CLIENTE</option>
+                <option value="OPERADOR" ${currentRol === 'OPERADOR' ? 'selected' : ''}>OPERADOR</option>
+                <option value="ADMIN" ${currentRol === 'ADMIN' ? 'selected' : ''}>ADMINISTRADOR</option>
+              </select>
+            </td>
+            <td>
+              <span class="badge-estado" style="background: ${isActivo ? '#dcfce7' : '#fee2e2'}; color: ${isActivo ? '#166534' : '#991b1b'};">
+                ${isActivo ? 'ACTIVO' : 'DESACTIVADO'}
+              </span>
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.85rem;">${dateStr}</td>
+            <td style="text-align: right;">
+              <button onclick="toggleUserStatus('${user.userId}', ${isActivo})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; background: ${isActivo ? '#ef4444' : '#22c55e'};">
+                ${isActivo ? 'Desactivar' : 'Activar'}
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:2rem;">Error al cargar usuarios: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function changeUserRole(userId) {
+      const select = document.getElementById(`role-select-${userId}`);
+      const newRol = select.value;
+
+      try {
+        await apiFetch(`/usuarios/${userId}`, {
+          method: "PUT",
+          body: JSON.stringify({ rol: newRol })
+        });
+        showToast(`Rol actualizado a ${newRol} exitosamente`, "success");
+        await loadUsers();
+      } catch (err) {
+        showToast("Error al actualizar rol: " + err.message, "error");
+      }
+    }
+
+    async function toggleUserStatus(userId, currentStatus) {
+      const action = currentStatus ? "desactivar" : "activar";
+      showCustomConfirm(
+        `${action.toUpperCase()} Usuario`,
+        `¿Está seguro de que desea ${action} este usuario?`,
+        async () => {
+          try {
+            if (currentStatus) {
+              await apiFetch(`/usuarios/${userId}`, { method: "DELETE" });
+            } else {
+              await apiFetch(`/usuarios/${userId}`, {
+                method: "PUT",
+                body: JSON.stringify({ activo: true })
+              });
+            }
+            showToast(`Usuario ${action}do exitosamente`, "success");
+            await loadUsers();
+          } catch (err) {
+            showToast(`Error al ${action} usuario: ` + err.message, "error");
+          }
+        }
+      );
+    }
+  </script>
+</body>
+</html>

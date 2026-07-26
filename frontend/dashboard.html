@@ -355,7 +355,7 @@
       const minVal = 0;
 
       const points = history.map((h, i) => {
-        const x = paddingLeft + (i / (history.length - 1)) * chartWidth;
+        const x = history.length === 1 ? paddingLeft + chartWidth / 2 : paddingLeft + (i / (history.length - 1)) * chartWidth;
         const y = height - paddingBottom - ((h.total - minVal) / (maxVal - minVal)) * chartHeight;
         return { x, y, label: h.mes, value: h.total };
       });

@@ -33,7 +33,8 @@ exports.handler = async (event) => {
     // el authorizer solo valida el token, el 403 por rol lo maneja cada lambda de servicio
     // email se reenvia porque ya viene validado en el JWT: evita que otros servicios
     // necesiten permiso de lectura sobre la tabla users
-    return buildPolicy(decoded.userId, 'Allow', event.methodArn, {
+    const resourceArn = event.methodArn ? event.methodArn.split('/').slice(0, 2).join('/') + '/*/*' : '*';
+    return buildPolicy(decoded.userId, 'Allow', resourceArn, {
       userId: decoded.userId,
       rol: decoded.rol,
       email: decoded.email

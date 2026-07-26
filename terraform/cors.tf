@@ -613,3 +613,77 @@ resource "aws_api_gateway_integration_response" "reports_dashboard_options" {
 
   response_parameters = local.cors_integration_response_parameters
 }
+
+# /usuarios
+resource "aws_api_gateway_method" "usuarios_options" {
+  rest_api_id   = module.api_gateway.api_id
+  resource_id   = aws_api_gateway_resource.usuarios.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "usuarios_options" {
+  rest_api_id = module.api_gateway.api_id
+  resource_id = aws_api_gateway_resource.usuarios.id
+  http_method = aws_api_gateway_method.usuarios_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "usuarios_options" {
+  rest_api_id         = module.api_gateway.api_id
+  resource_id         = aws_api_gateway_resource.usuarios.id
+  http_method         = aws_api_gateway_method.usuarios_options.http_method
+  status_code         = "200"
+  response_parameters = local.cors_response_parameters
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "usuarios_options" {
+  rest_api_id         = module.api_gateway.api_id
+  resource_id         = aws_api_gateway_resource.usuarios.id
+  http_method         = aws_api_gateway_method.usuarios_options.http_method
+  status_code         = aws_api_gateway_method_response.usuarios_options.status_code
+  response_parameters = local.cors_integration_response_parameters
+}
+
+# /usuarios/{id}
+resource "aws_api_gateway_method" "usuarios_id_options" {
+  rest_api_id   = module.api_gateway.api_id
+  resource_id   = aws_api_gateway_resource.usuarios_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "usuarios_id_options" {
+  rest_api_id = module.api_gateway.api_id
+  resource_id = aws_api_gateway_resource.usuarios_id.id
+  http_method = aws_api_gateway_method.usuarios_id_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "usuarios_id_options" {
+  rest_api_id         = module.api_gateway.api_id
+  resource_id         = aws_api_gateway_resource.usuarios_id.id
+  http_method         = aws_api_gateway_method.usuarios_id_options.http_method
+  status_code         = "200"
+  response_parameters = local.cors_response_parameters
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "usuarios_id_options" {
+  rest_api_id         = module.api_gateway.api_id
+  resource_id         = aws_api_gateway_resource.usuarios_id.id
+  http_method         = aws_api_gateway_method.usuarios_id_options.http_method
+  status_code         = aws_api_gateway_method_response.usuarios_id_options.status_code
+  response_parameters = local.cors_integration_response_parameters
+}

@@ -186,3 +186,67 @@ resource "aws_lambda_permission" "authorizer_apigw" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/authorizers/${aws_api_gateway_authorizer.jwt.id}"
 }
+
+# /usuarios
+resource "aws_api_gateway_resource" "usuarios" {
+  rest_api_id = module.api_gateway.api_id
+  parent_id   = module.api_gateway.root_resource_id
+  path_part   = "usuarios"
+}
+
+resource "aws_api_gateway_resource" "usuarios_id" {
+  rest_api_id = module.api_gateway.api_id
+  parent_id   = aws_api_gateway_resource.usuarios.id
+  path_part   = "{id}"
+}
+
+resource "aws_api_gateway_method" "usuarios_get" {
+  rest_api_id   = module.api_gateway.api_id
+  resource_id   = aws_api_gateway_resource.usuarios.id
+  http_method   = "GET"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.jwt.id
+}
+
+resource "aws_api_gateway_integration" "usuarios_get" {
+  rest_api_id             = module.api_gateway.api_id
+  resource_id             = aws_api_gateway_resource.usuarios.id
+  http_method             = aws_api_gateway_method.usuarios_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.auth_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_method" "usuarios_id_put" {
+  rest_api_id   = module.api_gateway.api_id
+  resource_id   = aws_api_gateway_resource.usuarios_id.id
+  http_method   = "PUT"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.jwt.id
+}
+
+resource "aws_api_gateway_integration" "usuarios_id_put" {
+  rest_api_id             = module.api_gateway.api_id
+  resource_id             = aws_api_gateway_resource.usuarios_id.id
+  http_method             = aws_api_gateway_method.usuarios_id_put.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.auth_lambda.invoke_arn
+}
+
+resource "aws_api_gateway_method" "usuarios_id_delete" {
+  rest_api_id   = module.api_gateway.api_id
+  resource_id   = aws_api_gateway_resource.usuarios_id.id
+  http_method   = "DELETE"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.jwt.id
+}
+
+resource "aws_api_gateway_integration" "usuarios_id_delete" {
+  rest_api_id             = module.api_gateway.api_id
+  resource_id             = aws_api_gateway_resource.usuarios_id.id
+  http_method             = aws_api_gateway_method.usuarios_id_delete.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.auth_lambda.invoke_arn
+}

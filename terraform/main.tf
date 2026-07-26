@@ -147,9 +147,17 @@ module "api_gateway" {
     aws_api_gateway_method.orders_id_status_options.id,
     aws_api_gateway_method.orders_id_cancel_options.id,
     aws_api_gateway_method.reports_dashboard_options.id,
+    aws_api_gateway_method.usuarios_get.id,
+    aws_api_gateway_integration.usuarios_get.id,
+    aws_api_gateway_method.usuarios_id_put.id,
+    aws_api_gateway_integration.usuarios_id_put.id,
+    aws_api_gateway_method.usuarios_id_delete.id,
+    aws_api_gateway_integration.usuarios_id_delete.id,
+    aws_api_gateway_method.usuarios_options.id,
+    aws_api_gateway_method.usuarios_id_options.id,
     aws_api_gateway_gateway_response.cors_4xx.id,
     aws_api_gateway_gateway_response.cors_5xx.id,
-    "v2.0-idempotency-key-cors-fix"
+    "v2.1-usuarios-crud-cors-trigger"
   ]))
 }
 

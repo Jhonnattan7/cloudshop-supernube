@@ -84,11 +84,29 @@ async function buildDashboard() {
     .sort((a, b) => b.totalGastado - a.totalGastado)
     .slice(0, TOP_N);
 
+  const ventasPorMes = {};
+  for (const order of ventasValidas) {
+    const rawDate = order.createdAt || order.timestamp;
+    const date = rawDate ? new Date(rawDate) : new Date();
+    const yearMonth = date.toISOString().slice(0, 7);
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthLabel = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    
+    if (!ventasPorMes[yearMonth]) {
+      ventasPorMes[yearMonth] = { mes: monthLabel, total: 0, yearMonth };
+    }
+    ventasPorMes[yearMonth].total += Number(order.total || 0);
+  }
+
   const pedidosPorEstado = orders.reduce((acc, o) => {
     const st = (o.estado || o.status || 'PENDIENTE').toUpperCase();
     acc[st] = (acc[st] || 0) + 1;
     return acc;
   }, {});
+
+  const historicoVentas = Object.values(ventasPorMes)
+    .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
+    .map(({ mes, total }) => ({ mes, total }));
 
   return {
     totalVentas,
@@ -96,7 +114,8 @@ async function buildDashboard() {
     productosMasVendidos,
     productosAgotados,
     clientesConMasCompras,
-    pedidosPorEstado
+    pedidosPorEstado,
+    historicoVentas
   };
 }
 

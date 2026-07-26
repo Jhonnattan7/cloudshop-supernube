@@ -1,5 +1,6 @@
 const { registerHandler } = require('./register');
 const { loginHandler } = require('./login');
+const { listUsersHandler, updateUserHandler, deleteUserHandler } = require('./users');
 const { errorResponse } = require('./response');
 
 exports.handler = async (event) => {
@@ -22,6 +23,18 @@ exports.handler = async (event) => {
 
     if (event.resource === '/auth/login' && event.httpMethod === 'POST') {
       return await loginHandler(event);
+    }
+
+    if (event.resource === '/usuarios' && event.httpMethod === 'GET') {
+      return await listUsersHandler(event);
+    }
+
+    if (event.resource === '/usuarios/{id}' && event.httpMethod === 'PUT') {
+      return await updateUserHandler(event);
+    }
+
+    if (event.resource === '/usuarios/{id}' && event.httpMethod === 'DELETE') {
+      return await deleteUserHandler(event);
     }
 
     return errorResponse(404, 'NOT_FOUND', 'Route not found');

@@ -1187,8 +1187,9 @@ function updateNavbar() {
     
     linksHTML += `<li><a href="orders.html" id="link-orders" class="nav-link"><i class="fi fi-rr-receipt" style="margin-right:0.4rem; font-size:0.85rem; color:var(--primary);"></i>Pedidos</a></li>`;
     
-    if (role === "ADMIN" || role === "OPERADOR") {
+    if (role === "ADMIN") {
       linksHTML += `<li><a href="dashboard.html" id="link-dashboard" class="nav-link"><i class="fi fi-rr-chart-histogram" style="margin-right:0.4rem; font-size:0.85rem; color:var(--primary);"></i>Dashboard</a></li>`;
+      linksHTML += `<li><a href="users.html" id="link-users" class="nav-link"><i class="fi fi-rr-users" style="margin-right:0.4rem; font-size:0.85rem; color:var(--primary);"></i>Usuarios</a></li>`;
     }
     
     mainLinks.innerHTML = linksHTML;
@@ -1201,7 +1202,8 @@ function updateNavbar() {
       "catalog.html": "link-catalog",
       "cart.html": "link-cart",
       "orders.html": "link-orders",
-      "dashboard.html": "link-dashboard"
+      "dashboard.html": "link-dashboard",
+      "users.html": "link-users"
     };
     const activeId = linkIdMap[page];
     if (activeId) {
